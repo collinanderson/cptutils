@@ -7,7 +7,7 @@
 #include "options.h"
 #include "tests.h"
 
-// #define NO_STDERR
+#define NO_STDERR
 
 int main(int argc, char** argv)
 {
