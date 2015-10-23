@@ -7,7 +7,7 @@
 #include "options.h"
 #include "tests.h"
 
-#define NO_STDERR
+// #define NO_STDERR
 
 int main(int argc, char** argv)
 {
@@ -24,7 +24,7 @@ int main(int argc, char** argv)
   CU_ErrorAction error_action = CUEA_IGNORE;
   setvbuf(stdout, NULL, _IONBF, 0);
 
-  if (CU_initialize_registry()) 
+  if (CU_initialize_registry())
     {
       fprintf(stderr,"failed to initialise registry\n");
       return EXIT_FAILURE;
@@ -37,8 +37,8 @@ int main(int argc, char** argv)
   int status;
 
   /*
-    suppress stderr during the tests, this is not 
-    that portable and we might need some autoconf 
+    suppress stderr during the tests, this is not
+    that portable and we might need some autoconf
   */
 
 #ifdef NO_STDERR
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   int nfail = CU_get_number_of_failures();
 
   if (verbose)
-    printf("\nSuite %s: %d failed\n", 
+    printf("\nSuite %s: %d failed\n",
 	   (status == 0 ? "OK" : "errored"),
 	   nfail);
 

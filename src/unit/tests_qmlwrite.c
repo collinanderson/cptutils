@@ -42,11 +42,16 @@ extern void test_qmlwrite_minimal(void)
     CU_ASSERT_EQUAL_FATAL(qml_set_entry(qml, 1, &entry), 0);
   }
 
+  fprintf(stderr, "created\n");
+
   char *path = tmpnam(NULL);
 
   CU_ASSERT_PTR_NOT_NULL_FATAL(path);
 
   CU_ASSERT_EQUAL(qml_write(path, qml), 0);
+
+  fprintf(stderr, "created\n");
+
   CU_ASSERT_EQUAL(access(path, F_OK), 0);
 
   /*
@@ -58,4 +63,6 @@ extern void test_qmlwrite_minimal(void)
 
   // unlink(path);
   qml_destroy(qml);
+
+  fprintf(stderr, "destroyed\n");
 }
