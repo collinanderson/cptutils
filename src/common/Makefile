@@ -15,7 +15,7 @@ OBJCSS3 = css3.o css3write.o
 OBJID   = ident.o identtab.o
 OBJODB  = odbbridge.o odb.o odbscan.o odbparse.o
 OBJSAO  = sao.o saowrite.o
-OBJQML  = qml.o
+OBJQML  = qml.o qmlwrite.o
 OBJUTF8 = utf8.o
 OBJBT   = btrace.o
 

@@ -33,6 +33,7 @@
 #include "tests_pov.h"
 #include "tests_povwrite.h"
 #include "tests_qml.h"
+#include "tests_qmlwrite.h"
 #include "tests_sao.h"
 #include "tests_saowrite.h"
 #include "tests_stdcol.h"
@@ -71,6 +72,7 @@ static CU_SuiteInfo suites[] =
     { "pov",        NULL, NULL, tests_pov },
     { "povwrite",   NULL, NULL, tests_povwrite },
     { "qml",        NULL, NULL, tests_qml },
+    { "qmlwrite",   NULL, NULL, tests_qmlwrite },
     { "sao",        NULL, NULL, tests_sao },
     { "saowrite",   NULL, NULL, tests_saowrite },
     { "stdcol",     NULL, NULL, tests_stdcol },

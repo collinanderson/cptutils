@@ -12,7 +12,7 @@
 #define QML_TYPE_INTERPOLATED 2
 
 typedef struct {
-  char red, green, blue;
+  unsigned char red, green, blue;
   double value;
   char *label;
 } qml_entry_t;
