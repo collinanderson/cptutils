@@ -4,6 +4,7 @@
 */
 
 #include <unistd.h>
+#include <stdio.h>
 
 #include <qmlwrite.h>
 #include "tests_qmlwrite.h"
