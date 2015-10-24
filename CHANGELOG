@@ -15,6 +15,7 @@ Changes
   address will be usable.
 
 1.60 (pending)
+  - added cptqml program (converts cpt to QGis style)
   - added svga colour support to svgx
   - use of uninitialised value bug in ggr.c fixed, many thanks
     to David Binderman for spotting this.
