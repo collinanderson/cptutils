@@ -1,8 +1,8 @@
-SRC      = common avlcpt cptcat cptclip cptcont \
-	   cptinfo cptsvg cpthsv gimpsvg gimplut \
-	   gplcpt pspsvg pssvg svgx xycpt
+SRC = common avlcpt cptcat cptclip cptcont cptinfo cptsvg \
+	cptqml cpthsv gimpsvg gimplut gplcpt pspsvg pssvg \
+	svgx xycpt
 RUBBISH += *~
-CONFIG  += Common.mk
+CONFIG += Common.mk
 
 ifneq (no,$(PYTHON))
 
@@ -41,10 +41,9 @@ test check :
 unit :
 	$(MAKE) -C unit unit
 
-veryclean : 
+veryclean :
 	$(RM) $(CONFIG)
 
 .PHONY : all install install-dirs clean test check unit
 
 include Common.mk
-
