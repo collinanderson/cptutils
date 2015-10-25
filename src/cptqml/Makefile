@@ -16,8 +16,9 @@ all : $(NAME)
 # $(NAME).1
 
 install :
-	$(INSTALL_DATA) $(NAME).1 $(DESTDIR)$(mandir)/man1/$(NAME).1
 	$(INSTALL_PROGRAM) $(NAME) $(DESTDIR)$(bindir)/$(NAME)
+
+# 	$(INSTALL_DATA) $(NAME).1 $(DESTDIR)$(mandir)/man1/$(NAME).1
 
 clean :
 	$(RM) $(RUBBISH)
