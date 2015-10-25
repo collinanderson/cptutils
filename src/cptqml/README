@@ -1,0 +1,7 @@
+This is almost done, but I couldn't find a way to actually
+load a qml file into QGis so that I could inspect it, the dev
+mailing list does not respond to queries and the DTD for the
+qml format is hoplessly broken.
+
+So I'll abandon this for now, perhaps one day a QGis user who
+knows how to inspect the style file will contact me.
