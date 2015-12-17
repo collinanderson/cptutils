@@ -160,7 +160,7 @@ def capabilities() :
 def shortest_path(graph, start, end, path=None):
     if path is None:
         path = []
-    path += [start]
+    path = path + [start]
     if start == end:
         return path
     if not graph.has_key(start):
@@ -169,8 +169,9 @@ def shortest_path(graph, start, end, path=None):
     for node in graph[start]:
         if node not in path:
             newpath = shortest_path(graph, node, end, path)
-            if newpath and (not shortest or len(newpath) < len(shortest)):
-                shortest = newpath
+            if newpath:
+                if not shortest or len(newpath) < len(shortest):
+                    shortest = newpath
     return shortest
 
 # determine type from path
@@ -182,7 +183,7 @@ def gradtype(path) :
         print("cannot determine file extension for {0!s}".format(path))
         sys.exit(1)
 
-    gtype = gtypedict.get(ext)
+    gtype = gtypedict.get(ext, None)
     if gtype is None:
         print("unknown gradient extension {0!s}".format(ext))
         formats_supported(gajmat, gnames)
