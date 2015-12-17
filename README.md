@@ -9,3 +9,4 @@ To build from git sources run the script `scripts/setup.sh`.
 
 [![Build Status](https://travis-ci.org/jjgreen/cptutils.png)](https://travis-ci.org/jjgreen/cptutils)
 [![Coverage Status](https://coveralls.io/repos/jjgreen/cptutils/badge.svg?branch=master)](https://coveralls.io/r/jjgreen/cptutils?branch=master)
+[![Code Issues](https://www.quantifiedcode.com/api/v1/project/65c9735ed1424d6da06abdceebcca38f/badge.svg)](https://www.quantifiedcode.com/app/project/65c9735ed1424d6da06abdceebcca38f)
