@@ -158,7 +158,9 @@ def capabilities() :
 # taken from http://www.python.org/doc/essays/graphs.html
 # this simple shortest path code determines the call sequence
 
-def shortest_path(graph, start, end, path=[]):
+def shortest_path(graph, start, end, path=None):
+    if path is None:
+        path = []
     path = path + [start]
     if start == end:
         return path
