@@ -121,7 +121,7 @@ def p_unkn(buf,offset,name,shift):
 		ml = 15
 		for i in range(ml):
 			try:
-				str_hex+="%02x " % ord(buf[offset+i])
+				str_hex+="{0:02x} ".format(ord(buf[offset+i]))
 				if ord(buf[offset+i]) < 32 or 126<ord(buf[offset+i]):
 					str_asc +='.'
 				else:
