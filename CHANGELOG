@@ -14,7 +14,7 @@ Changes
   forseeable future; for versions after 1.57 only the new
   address will be usable.
 
-1.60 (pending)
+1.60 (17 Dec 2015)
   - added svga colour support to svgx
   - use of uninitialised value bug in ggr.c fixed, many thanks
     to David Binderman for spotting this.
