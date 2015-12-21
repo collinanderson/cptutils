@@ -46,7 +46,7 @@ static void svgset_destroy(svgset_t *svgset)
 
   for (i=0 ; i < svgset->n ; i++)
     svg_destroy(svgset->svg[i]);
-  
+
   free(svgset->svg);
   free(svgset);
 }
@@ -68,8 +68,8 @@ static unsigned int grd5_z_it(uint32_t z)
   return (unsigned int)z*100;
 }
 
-static unsigned int grd5_zmid_it(uint32_t z0, 
-				 uint32_t z1, 
+static unsigned int grd5_zmid_it(uint32_t z0,
+				 uint32_t z1,
 				 uint32_t M)
 {
   return (unsigned int)z0*100 + ((unsigned int)z1 - (unsigned int)z0)*M;
@@ -143,7 +143,7 @@ static int trim_op(gstack_t* stack)
 }
 
 /*
-  map a value in [0,1] to a double which is an integer 
+  map a value in [0,1] to a double which is an integer
   in 0 .. 255
 */
 
@@ -151,11 +151,11 @@ static double clamp_channel(double dval)
 {
   int ival = floor(dval * 256);
 
-  if (ival > 255) 
+  if (ival > 255)
     ival = 255;
   else if (ival < 0)
     ival = 0;
-  
+
   return ival;
 }
 
@@ -164,10 +164,10 @@ static double clamp_channel(double dval)
   them to RGB colour space
 
   These do not, in general, give the same values as PS since
-  we are doing a naive and ham-fisted conversion not taking 
-  into account colour profiles as PS does.  We could probably 
-  do better if we used the open-source and widely available 
-  Little CMS library (http://www.littlecms.com/) ... 
+  we are doing a naive and ham-fisted conversion not taking
+  into account colour profiles as PS does.  We could probably
+  do better if we used the open-source and widely available
+  Little CMS library (http://www.littlecms.com/) ...
 */
 
 static int grsc_to_rgb(grd5_colour_stop_t *stop)
@@ -192,16 +192,16 @@ static int hsb_to_rgb(grd5_colour_stop_t *stop)
   hsv[0] = stop->u.hsb.H / 360.0;
   hsv[1] = stop->u.hsb.Strt / 100.0;
   hsv[2] = stop->u.hsb.Brgh / 100.0;
-  
+
   double rgb[3];
 
   hsvD_to_rgbD(hsv, rgb);
-  
+
   stop->u.rgb.Rd  = clamp_channel(rgb[0]);
   stop->u.rgb.Grn = clamp_channel(rgb[1]);
   stop->u.rgb.Bl  = clamp_channel(rgb[2]);
-	  
-  stop->type = GRD5_MODEL_RGB;	  
+
+  stop->type = GRD5_MODEL_RGB;
 
   return 0;
 }
@@ -210,7 +210,7 @@ static int cmyc_to_rgb(grd5_colour_stop_t *stop)
 {
   /* Naive implementation */
 
-  double 
+  double
     c = stop->u.cmyc.Cyn  / 100.0,
     m = stop->u.cmyc.Mgnt / 100.0,
     y = stop->u.cmyc.Ylw  / 100.0,
@@ -237,7 +237,7 @@ static double lab_xyz_curve(double W)
 
 static double xyz_rgb_curve(double W)
 {
-  if (W > 0.0031308) 
+  if (W > 0.0031308)
     return 1.055 * pow(W, 1/2.4) - 0.055;
 
   return 12.92 * W;
@@ -255,7 +255,7 @@ static int lab_to_rgb(grd5_colour_stop_t *stop)
     L = stop->u.lab.Lmnc,
     A = stop->u.lab.A,
     B = stop->u.lab.B;
-    
+
   double
     vY = (L+16.0) / 116.0,
     vX = A / 500.0 + vY,
@@ -269,7 +269,7 @@ static int lab_to_rgb(grd5_colour_stop_t *stop)
     X = REF_X * vX,
     Y = REF_Y * vY,
     Z = REF_Z * vZ;
-    
+
   /* from easyrgb.com : XYZ -> RGB */
 
   vX = X / 100.0;
@@ -392,17 +392,17 @@ static gstack_t* rectify_rgb(grd5_grad_custom_t* gradc, pssvg_opt_t opt)
 
       if (gstack_push(stack, &stop) != 0)
 	return NULL;
-      
+
       if (grd5_stop[i].Mdpn != 50)
 	{
-	  stop.z = grd5_zmid_it(grd5_stop[i].Lctn, 
-				grd5_stop[i+1].Lctn, 
+	  stop.z = grd5_zmid_it(grd5_stop[i].Lctn,
+				grd5_stop[i+1].Lctn,
 				grd5_stop[i].Mdpn);
 	  stop.r = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Rd) +
 			grd5_rgb_it(grd5_stop[i+1].u.rgb.Rd));
-	  stop.g = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Grn) + 
+	  stop.g = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Grn) +
 			grd5_rgb_it(grd5_stop[i+1].u.rgb.Grn));
-	  stop.b = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Bl) + 
+	  stop.b = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Bl) +
 			grd5_rgb_it(grd5_stop[i+1].u.rgb.Bl));
 
 	  if (gstack_push(stack, &stop) != 0)
@@ -471,13 +471,13 @@ static gstack_t* rectify_op(grd5_grad_custom_t* gradc)
 
       if (gstack_push(stack, &stop) != 0)
 	return NULL;
-      
+
       if (grd5_stop[i].Mdpn != 50)
 	{
-	  stop.z  = grd5_zmid_it(grd5_stop[i].Lctn, 
-				 grd5_stop[i+1].Lctn, 
+	  stop.z  = grd5_zmid_it(grd5_stop[i].Lctn,
+				 grd5_stop[i+1].Lctn,
 				 grd5_stop[i].Mdpn);
-	  stop.op = 0.5*(grd5_op_it(grd5_stop[i].Opct) + 
+	  stop.op = 0.5*(grd5_op_it(grd5_stop[i].Opct) +
 			 grd5_op_it(grd5_stop[i+1].Opct));
 
 	  if (gstack_push(stack, &stop) != 0)
@@ -507,9 +507,9 @@ static gstack_t* rectify_op(grd5_grad_custom_t* gradc)
   return stack;
 }
 
-static int pssvg_title(grd5_grad_t *grd5_grad, 
-		       svg_t *svg, 
-		       pssvg_opt_t opt, 
+static int pssvg_title(grd5_grad_t *grd5_grad,
+		       svg_t *svg,
+		       pssvg_opt_t opt,
 		       int gradnum)
 {
   size_t len;
@@ -519,11 +519,24 @@ static int pssvg_title(grd5_grad_t *grd5_grad,
   else
     {
       grd5_string_t *ucs2_title_string = grd5_grad->title;
-      
+
       size_t ucs2_title_len = ucs2_title_string->len;
-      char  *ucs2_title     = ucs2_title_string->content;
-      size_t utf8_title_len = ucs2_title_len; 
-      char   utf8_title[ucs2_title_len];
+      char *ucs2_title = ucs2_title_string->content;
+
+      /*
+	One would kind-of-expect that a UTF-8 string would use no
+	more space than a UCS-2, but the former uses 1-4 bytes, the
+	latter 2-4, so it is conceivable that there are 2-byte UCS-2
+	codepoints which map to 4-byte UTF-8; at worst we might have
+	a factor of two.  I have seen a real case where the factor
+	seems to be strictly greater than one (iconv returns the
+	error "Argument list too long" when utf8_title_len is equal
+	to ucs2_title_len), this on Japanese characters, but gives
+	no error for a factor 2.
+      */
+
+      size_t utf8_title_len = 2 * ucs2_title_len;
+      char utf8_title[ucs2_title_len];
 
       if (ucs2_to_utf8(ucs2_title,
 		       ucs2_title_len,
@@ -531,12 +544,12 @@ static int pssvg_title(grd5_grad_t *grd5_grad,
 		       utf8_title_len) != 0)
 	{
 	  btrace("failed ucs2 to utf8 conversion");
-	  return 1;		   
+	  return 1;
 	}
 
       /*
 	prepare an initial entry for the hsearch() hash,
-	we use the data field (which is a void*) as an 
+	we use the data field (which is a void*) as an
 	integer which is the count of title occurrences
       */
 
@@ -558,8 +571,8 @@ static int pssvg_title(grd5_grad_t *grd5_grad,
       if (title_count > 1)
 	{
 	  /*
-	    in this case the entry e was already in the hash 
-	    table and so not inserted, hence we can free the 
+	    in this case the entry e was already in the hash
+	    table and so not inserted, hence we can free the
 	    storage allocated for the putative key
 
 	    the odd PRIuPTR is printf specifier for uintptr_t,
@@ -569,7 +582,7 @@ static int pssvg_title(grd5_grad_t *grd5_grad,
 	  */
 
 	  free(e.key);
-	  len = snprintf((char*)svg->name, SVG_NAME_LEN, 
+	  len = snprintf((char*)svg->name, SVG_NAME_LEN,
 			 "%s_%" PRIuPTR, (char*)utf8_title, title_count);
 	}
       else
@@ -588,8 +601,8 @@ static int pssvg_title(grd5_grad_t *grd5_grad,
   return 0;
 }
 
-static int pssvg_convert_one(grd5_grad_custom_t *grd5_gradc, 
-			     svg_t *svg, 
+static int pssvg_convert_one(grd5_grad_custom_t *grd5_gradc,
+			     svg_t *svg,
 			     pssvg_opt_t opt)
 {
   gstack_t *rgbrec;
@@ -608,14 +621,14 @@ static int pssvg_convert_one(grd5_grad_custom_t *grd5_gradc,
 	  err += (grdxsvg(rgbrec, oprec, svg) != 0);
 	  gstack_destroy(oprec);
 	}
-      
+
       gstack_destroy(rgbrec);
     }
 
   if (err)
     btrace("failed conversion of rectified stops to svg");
   else if (opt.verbose)
-    printf("  '%s', %i%% smooth; %i colour, %i opacity converted to %i RGBA\n", 
+    printf("  '%s', %i%% smooth; %i colour, %i opacity converted to %i RGBA\n",
 	   svg->name,
 	   (int)round(grd5_gradc->interp/40.96),
 	   grd5_gradc->colour.n,
@@ -625,9 +638,9 @@ static int pssvg_convert_one(grd5_grad_custom_t *grd5_gradc,
   return err;
 }
 
-static int pssvg_convert_all(grd5_t *grd5, 
-			     svgset_t *svgset, 
-			     gstack_t *gstack, 
+static int pssvg_convert_all(grd5_t *grd5,
+			     svgset_t *svgset,
+			     gstack_t *gstack,
 			     pssvg_opt_t opt)
 {
   int i, n = grd5->n;
@@ -640,16 +653,16 @@ static int pssvg_convert_all(grd5_t *grd5,
 	common) so that the output SVG titles are unique.  We
 	do this by appending _2, _3, ... to repeated titles.
 	So we need to keep track of how many occurenced of
-	each title we have seen so far.  The appropriate data 
-	structure is an associative array or hashmap, but 
+	each title we have seen so far.  The appropriate data
+	structure is an associative array or hashmap, but
 	we don't really want to add another dependancy to the
-	package; so we use the limited features of the POSIX 
+	package; so we use the limited features of the POSIX
 	hsearch(3).
 
 	Note that we do not call hdestroy() since that calls
 	free() on the keys on some Unixes (BSD for example)
 	and we only have at worst a few kB of keys, it does
-	not seem worth the while to set up the conditional 
+	not seem worth the while to set up the conditional
 	compilation.
       */
 
@@ -688,7 +701,7 @@ static int pssvg_convert_all(grd5_t *grd5,
 	  break;
 
 	case GRD5_GRAD_NOISE:
-	  
+
 	  btrace("no conversion of (noise) gradient %i", i);
 	  break;
 
@@ -706,7 +719,7 @@ static int pssvg_convert(grd5_t *grd5, svgset_t *svgset, pssvg_opt_t opt)
   int i, n = grd5->n;
   gstack_t *gstack;
 
-  if ((gstack = gstack_new(sizeof(svg_t*), n, 1)) == NULL) 
+  if ((gstack = gstack_new(sizeof(svg_t*), n, 1)) == NULL)
     return 1;
 
   int err = pssvg_convert_all(grd5, svgset, gstack, opt);
@@ -723,18 +736,18 @@ static int pssvg_convert(grd5_t *grd5, svgset_t *svgset, pssvg_opt_t opt)
       else
 	{
 	  if (m < n)
-	    btrace("only %zd/%d gradient converted", m, n); 
+	    btrace("only %zd/%d gradient converted", m, n);
 
 	  if (gstack_reverse(gstack) != 0)
 	    return 1;
 
 	  svgset->n = m;
-	  
+
 	  if ((svgset->svg = malloc(m*sizeof(svg_t*))) == NULL)
 	    return 1;
 
 	  for (i=0 ; i<m ; i++)
-	    gstack_pop(gstack, svgset->svg+i); 
+	    gstack_pop(gstack, svgset->svg+i);
 	}
     }
 
@@ -750,10 +763,10 @@ extern int pssvg(pssvg_opt_t opt)
 
   switch (grd5_read(opt.file.input, &grd5))
     {
-    case GRD5_READ_OK: 
+    case GRD5_READ_OK:
       break;
     case GRD5_READ_FOPEN:
-      btrace("failed to read %s", 
+      btrace("failed to read %s",
 	      (opt.file.input ? opt.file.input : "stdin"));
       return 1;
     case GRD5_READ_FREAD:
@@ -786,7 +799,7 @@ extern int pssvg(pssvg_opt_t opt)
     }
 
   if (opt.verbose)
-    printf("parsed %i grd5 gradient%s\n", 
+    printf("parsed %i grd5 gradient%s\n",
 	   grd5->n,
 	   (grd5->n == 1) ? "" : "s");
 
@@ -812,9 +825,9 @@ extern int pssvg(pssvg_opt_t opt)
   svg_preview_t preview;
   preview.use = false;
 
-  if (svg_write(opt.file.output, 
-		svgset->n, 
-		(const svg_t**)svgset->svg, 
+  if (svg_write(opt.file.output,
+		svgset->n,
+		(const svg_t**)svgset->svg,
 		&preview) != 0)
     {
       btrace("failed write of svg");
