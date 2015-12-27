@@ -83,7 +83,7 @@ gdgraph = {}
 for t0, t1d in gajmat.iteritems() :
     gdgraph[t0] = t1d.keys()
 
-# also create a list of programs 
+# also create a list of programs
 
 programs = []
 
@@ -121,8 +121,7 @@ def formats_supported(M, N) :
     print "supported formats:"
 
     for name in sorted(N.keys()) :
-        print "| %3s | %-25s | %s%s |" % \
-            (name, N[name],
+        print "| {0:3!s} | {1:<25!s} | {2!s}{3!s} |".format(name, N[name],
              "R" if rfmt[name] else "-",
              "W" if wfmt[name] else "-")
 
@@ -152,25 +151,26 @@ def capabilities() :
                           alias,
                           quoted(gexts[name])
                           ))
-    print "# gradient-convert %s capabilities" % (version)
-    print "{\n  %s\n}" % (",\n  ".join(lines))
+    print "# gradient-convert {0!s} capabilities".format((version))
+    print "{{\n  {0!s}\n}}".format((",\n  ".join(lines)))
 
 # taken from http://www.python.org/doc/essays/graphs.html
 # this simple shortest path code determines the call sequence
 
-def shortest_path(graph, start, end, path=[]):
+def shortest_path(graph, start, end, path=None):
+    if path is None:
+        path = []
     path = path + [start]
     if start == end:
         return path
-    if not graph.has_key(start):
+    if start not in graph:
         return None
     shortest = None
     for node in graph[start]:
         if node not in path:
             newpath = shortest_path(graph, node, end, path)
-            if newpath:
-                if not shortest or len(newpath) < len(shortest):
-                    shortest = newpath
+            if newpath and (not shortest or len(newpath) < len(shortest)):
+                shortest = newpath
     return shortest
 
 # determine type from path
@@ -179,12 +179,12 @@ def gradtype(path) :
 
     ext = os.path.splitext(path)[1][1:]
     if not ext:
-        print("cannot determine file extension for %s" % path)
+        print("cannot determine file extension for {0!s}".format(path))
         sys.exit(1)
 
-    gtype = gtypedict.get(ext, None)
+    gtype = gtypedict.get(ext)
     if gtype is None:
-        print("unknown gradient extension %s" % ext)
+        print("unknown gradient extension {0!s}".format(ext))
         formats_supported(gajmat, gnames)
         sys.exit(1)
 
@@ -193,12 +193,12 @@ def gradtype(path) :
 
 def run_clist(clist, topath, verbose) :
     if verbose :
-        print "  %s" % (" ".join(clist))
+        print "  {0!s}".format((" ".join(clist)))
     if subprocess.call(clist) != 0 :
-        print "failed call to %s : aborting" % (clist[0])
+        print "failed call to {0!s} : aborting".format((clist[0]))
         return False
     if topath and not os.path.exists(topath) :
-        print "failed to create %s : aborting" % (topath)
+        print "failed to create {0!s} : aborting".format((topath))
         return False
     return True
 
@@ -251,8 +251,8 @@ def convert(ipath, opath, opt) :
 
         try:
             for f in os.listdir(tempdir) :
-                ipath  = "%s/%s" % (tempdir, f)
-                apath  = "%s/%s" % (arcdir, f)
+                ipath  = "{0!s}/{1!s}".format(tempdir, f)
+                apath  = "{0!s}/{1!s}".format(arcdir, f)
                 zf.write(ipath, arcname=apath)
                 delfiles.append(ipath)
         finally:
@@ -260,28 +260,28 @@ def convert(ipath, opath, opt) :
 
         return True
 
-    elif opt['burst'] : 
+    elif opt['burst'] :
 
         # basename used in the title, so make it meaningful,
-        # we don't take it from the output (as that will ba a 
+        # we don't take it from the output (as that will ba a
         # directory, and may well be ".")
 
         basename = os.path.splitext( os.path.split( ipath )[1] )[0]
 
         if opt['ifmt'] == 'grd' :
 
-            # input is a single grd file, convert it to a single 
+            # input is a single grd file, convert it to a single
             # svg file with muliple gradients; then call convert()
             # with that file as input and burst = True (so that
             # we execute the ifmt == 'svg' case below).
             # counting the gradient to reduce the redundant zeros
 
-            svgmulti = "%s/%s.svg" % (tempdir, basename)  
+            svgmulti = "{0!s}/{1!s}.svg".format(tempdir, basename)
             clist = ['pssvg'] + opt['btopts'] + ['-o', svgmulti, ipath]
             if opt['verbose'] :
-                print "  %s" % (" ".join(clist))
+                print "  {0!s}".format((" ".join(clist)))
             if subprocess.call(clist) != 0 :
-                print "failed call to %s : aborting" % (clist[0])
+                print "failed call to {0!s} : aborting".format((clist[0]))
                 return False
             delfiles.append(svgmulti)
 
@@ -292,7 +292,7 @@ def convert(ipath, opath, opt) :
 
         elif opt['ifmt'] == 'svg' :
 
-            # input is a single svg file (which may be from the 
+            # input is a single svg file (which may be from the
             # case above, or an original infile).
 
             if opt['ofmt'] == 'svg' :
@@ -305,7 +305,7 @@ def convert(ipath, opath, opt) :
                 # final output is not svg, so burst into a temp
                 # directory, then call convert() on each file in
                 # that directory, this time with burst = False
-                svgdir = "%s/%s" % (tempdir, basename)
+                svgdir = "{0!s}/{1!s}".format(tempdir, basename)
                 os.mkdir(svgdir)
                 deldirs.append(svgdir)
                 clist = ['svgsvg'] + opt['btopts'] + ['-o', svgdir, '-a', ipath]
@@ -315,8 +315,8 @@ def convert(ipath, opath, opt) :
                 opt['burst'] = False
                 for svg in os.listdir(svgdir) :
                     svgbase = os.path.splitext(svg)[0]
-                    ipath2 = "%s/%s" % (svgdir, svg)
-                    opath2 = "%s/%s.%s" % (opath, svgbase, gexts[opt['ofmt']])
+                    ipath2 = "{0!s}/{1!s}".format(svgdir, svg)
+                    opath2 = "{0!s}/{1!s}.{2!s}".format(opath, svgbase, gexts[opt['ofmt']])
                     delfiles.append(ipath2)
                     if not convert(ipath2, opath2, opt) :
                         return False
@@ -330,7 +330,7 @@ def convert(ipath, opath, opt) :
     # svg to svg (that is handled above)
 
     if opt['ifmt'] == opt['ofmt'] :
-        print "converting %s to %s seems, pointless?" % (opt['ifmt'], opt['ofmt'])
+        print "converting {0!s} to {1!s} seems, pointless?".format(opt['ifmt'], opt['ofmt'])
         return False
 
     # create the system-call sequence, first we create
@@ -348,7 +348,7 @@ def convert(ipath, opath, opt) :
     callpath = shortest_path(gdgraph, opt['ifmt'], opt['ofmt'])
 
     if callpath is None :
-        print "cannot convert %s to %s yet, sorry" % (opt['ifmt'], opt['ofmt'])
+        print "cannot convert {0!s} to {1!s} yet, sorry".format(opt['ifmt'], opt['ofmt'])
         formats_supported(gajmat, gnames)
         return False
 
@@ -371,7 +371,7 @@ def convert(ipath, opath, opt) :
     for cd0, cd1 in pairs(cdlist) :
 
         totype = cd0['totype']
-        path = ("%s/%s.%s" % (tempdir, basename, gexts[totype]))
+        path = ("{0!s}/{1!s}.{2!s}".format(tempdir, basename, gexts[totype]))
 
         cd0['topath']   = path
         cd1['frompath'] = path
@@ -387,10 +387,10 @@ def convert(ipath, opath, opt) :
         frompath = cd['frompath']
 
         clist = (
-            [program] + 
-            opt['btopts'] + 
+            [program] +
+            opt['btopts'] +
             ['-o', topath] +
-            opt['subopts'][program] + 
+            opt['subopts'][program] +
             [frompath]
             )
 
@@ -489,33 +489,33 @@ def main() :
             formats_supported(gajmat, gnames)
             sys.exit(0)
         elif o in ("-V", "--version") :
-            print "gradient-convert %s" % (version)
+            print "gradient-convert {0!s}".format((version))
             sys.exit(0)
         elif o in ("-c", "--capabilities") :
             capabilities()
             sys.exit(0)
-        elif o in ("-B", "--burst") : 
+        elif o in ("-B", "--burst") :
             burst = True
         elif o in ("-g", "--geometry") :
-            for prog in progs_g : 
+            for prog in progs_g :
                 subopts[prog].extend([o, a])
         elif o in ("-b", "--background",
                    "-f", "--foreground",
                    "-n", "--nan") :
-            for prog in progs_bfn : 
+            for prog in progs_bfn :
                 subopts[prog].extend([o, a])
         elif o in ("-p", "--preview") :
-            for prog in progs_p : 
+            for prog in progs_p :
                 subopts[prog].extend([o])
         elif o in ("-T", "--transparency") :
-            for prog in progs_T : 
+            for prog in progs_T :
                 subopts[prog].extend([o, a])
         elif o in ("-o", "--output-format") :
             ofmt = gtypedict.get(a)
-            assert ofmt, "no such output format: %s" % (a)
+            assert ofmt, "no such output format: {0!s}".format((a))
         elif o in ("-i", "--input-format") :
             ifmt = gtypedict.get(a)
-            assert ifmt, "no such input format: %s" % (a)
+            assert ifmt, "no such input format: {0!s}".format((a))
         elif o in ("-v", "--verbose") :
             verbose = True
         elif o in ("-z", "--zip") :
@@ -532,7 +532,7 @@ def main() :
     ipath, opath = args
 
     if verbose :
-        print "This is gradient-convert (version %s)" % (version)
+        print "This is gradient-convert (version {0!s})".format((version))
 
     atexit.register(cleanup_dirs, False)
     atexit.register(cleanup_files, False)
@@ -545,19 +545,19 @@ def main() :
             print "Output format must be specified (see -o option)"
             sys.exit(1)
         ofmt = gradtype(opath)
-    
+
     if verbose :
-        print "input: %s" % (gnames[ifmt])
-        print "  %s" % (ipath)
-        print "output: %s" % (gnames[ofmt])
-        print "  %s" % (opath)
+        print "input: {0!s}".format((gnames[ifmt]))
+        print "  {0!s}".format((ipath))
+        print "output: {0!s}".format((gnames[ofmt]))
+        print "  {0!s}".format((opath))
         print "call sequence:"
 
-    opt = { 'verbose' : verbose, 
-            'subopts' : subopts, 
-            'ifmt'    : ifmt, 
-            'ofmt'    : ofmt, 
-            'burst'   : burst, 
+    opt = { 'verbose' : verbose,
+            'subopts' : subopts,
+            'ifmt'    : ifmt,
+            'ofmt'    : ofmt,
+            'burst'   : burst,
             'zipped'  : zipped,
             'btopts'  : btopts }
 
@@ -574,4 +574,3 @@ def main() :
 # run main
 if __name__ == "__main__":
     main()
-
