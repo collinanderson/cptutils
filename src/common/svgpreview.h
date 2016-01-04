@@ -14,10 +14,8 @@
 
 typedef struct
 {
-  /* whether or not to include a preview */
   bool use;
-  /* the geometry of the preview in pixels */
-  size_t width, height, border, stroke;
+  size_t width, height;
 } svg_preview_t;
 
 extern int svg_preview_geometry(const char*, svg_preview_t*);
