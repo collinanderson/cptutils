@@ -96,9 +96,9 @@ extern int pg_write(pg_t *pg, const char *path)
   return err;
 }
 
-static int less_than_last(pg_stop_t *stop, double *last)
+static int leq_last(pg_stop_t *stop, double *last)
 {
-  if (stop->value < *last)
+  if (stop->value <= *last)
     {
       *last = stop->value;
       return 1;
@@ -107,9 +107,9 @@ static int less_than_last(pg_stop_t *stop, double *last)
     return -1;
 }
 
-static int greater_than_last(pg_stop_t *stop, double *last)
+static int geq_last(pg_stop_t *stop, double *last)
 {
-  if (stop->value > *last)
+  if (stop->value >= *last)
     {
       *last = stop->value;
       return 1;
@@ -122,24 +122,24 @@ static bool pg_is_decreasing(pg_t *pg)
 {
   double last = INFINITY;
   return gstack_foreach(pg->stack,
-			(int (*)(void*, void*))less_than_last,
-			(void*)&last) == 1;
+			(int (*)(void*, void*))leq_last,
+			(void*)&last) == 0;
 }
 
 static bool pg_is_increasing(pg_t *pg)
 {
   double last = -INFINITY;
   return gstack_foreach(pg->stack,
-			(int (*)(void*, void*))greater_than_last,
-			(void*)&last) == 1;
+			(int (*)(void*, void*))geq_last,
+			(void*)&last) == 0;
 }
 
-static int pg_coerce_decreasing(pg_t *pg)
+static int pg_coerce_increasing(pg_t *pg)
 {
-  if (pg_is_decreasing(pg))
+  if (pg_is_increasing(pg))
     return 0;
 
-  if (pg_is_increasing(pg))
+  if (pg_is_decreasing(pg))
     {
       gstack_reverse(pg->stack);
       return 0;
@@ -150,11 +150,69 @@ static int pg_coerce_decreasing(pg_t *pg)
   return 1;
 }
 
+typedef struct
+{
+  double min, max;
+} range_t;
+
+static int get_range(pg_stop_t *stop, range_t *range)
+{
+  if (stop->value > range->max)
+    range->max = stop->value;
+
+  if (stop->value < range->min)
+    range->min = stop->value;
+
+  return 1;
+}
+
+typedef struct
+{
+  double m, c;
+} affine_t;
+
+static int affine_transform(pg_stop_t *stop, affine_t *affine)
+{
+  stop->value = affine->m * stop->value + affine->c;
+  return 1;
+}
+
+static int pg_coerce_range(pg_t *pg, double min, double max)
+{
+  range_t range = {
+    .max = -INFINITY,
+    .min = INFINITY
+  };
+
+  if (gstack_foreach(pg->stack,
+		     (int (*)(void*, void*))get_range,
+		     (void*)&range) != 0)
+    {
+      btrace("failed to get range");
+      return 1;
+    }
+
+  double
+    m = (max - min) / (range.max - range.min),
+    c = min - range.min * m;
+  affine_t affine = { .m = m, .c = c };
+
+  if (gstack_foreach(pg->stack,
+		     (int (*)(void*, void*))affine_transform,
+		     (void*)&affine) != 0)
+    {
+      btrace("failed to tranform values");
+      return 1;
+    }
+
+  return 0;
+}
+
 extern int pg_write_stream(pg_t *pg, FILE* st)
 {
-  if (pg_coerce_decreasing(pg) != 0)
+  if (pg_coerce_increasing(pg) != 0)
     {
-      btrace("failed to coerce decreasing");
+      btrace("failed to coerce increasing");
       return 1;
     }
 
@@ -162,7 +220,14 @@ extern int pg_write_stream(pg_t *pg, FILE* st)
   const char *format;
 
   if (pg->percentage)
-    format = "%7.3f%% %3i %3i %3i %u\n";
+    {
+      if (pg_coerce_range(pg, 0, 100) != 0)
+	{
+	  btrace("failed to coerce into range [0, 100]");
+	  return 1;
+	}
+      format = "%7.3f%% %3i %3i %3i %u\n";
+    }
   else
     format = "%-7g %3i %3i %3i %u\n";
 

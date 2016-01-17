@@ -44,7 +44,10 @@
     <manvolnum>1</manvolnum>
   </citerefentry>
   to the colour-maps used by PostGIS, in particular those for
-  the <function>ST_ColorMap</function> function.
+  the <function>ST_ColorMap</function> function. It should also be
+  possible to use the maps in the GDAL program <command>gdaldem</command>,
+  the GRASS <function>r.colors</function> utility and in ESRI products
+  which call for a HDR color table.
 </para>
 
 <xi:include href="../docbook/para-stdio.xml"/>
