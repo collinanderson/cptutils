@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+  "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<refentry
+    id='cptpg1'
+    xmlns:xi="http://www.w3.org/2001/XInclude">
+
+<xi:include href="../docbook/refentryinfo-date.xml"/>
+
+<refmeta>
+<refentrytitle>CPTPG</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='manual'>User commands</refmiscinfo>
+<refmiscinfo class='source'>CPTUTILS</refmiscinfo>
+<refmiscinfo class='date'>17 January 2016</refmiscinfo>
+</refmeta>
+
+<refnamediv id='purpose'>
+<refname>cptpg</refname>
+<refpurpose>
+  convert GMT colour palette tables (cpt) to PostGIS colour-maps.
+</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>cptpg</command>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-o <replaceable>file</replaceable></arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-V </arg>
+    <arg choice='opt'><replaceable>file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para>
+  The <command>cptpg</command> utility converts the colour
+  palette table (cpt) files used by
+  <citerefentry>
+    <refentrytitle>GMT</refentrytitle>
+    <manvolnum>1</manvolnum>
+  </citerefentry>
+  to the colour-maps used by PostGIS, in particular those for
+  the <function>ST_ColorMap</function> function.
+</para>
+
+<xi:include href="../docbook/para-stdio.xml"/>
+
+</refsect1>
+
+<refsect1 id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+
+  <xi:include href="../docbook/varlistentry-backtrace-file.xml"/>
+
+  <xi:include href="../docbook/varlistentry-backtrace-format.xml"/>
+
+  <xi:include href="../docbook/varlistentry-help.xml"/>
+
+  <xi:include href="../docbook/varlistentry-output.xml"/>
+
+  <xi:include href="../docbook/varlistentry-verbose.xml"/>
+
+  <xi:include href="../docbook/varlistentry-version.xml"/>
+
+</variablelist>
+</refsect1>
+
+<xi:include href="../docbook/refsect1-author.xml"/>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para>
+  <citerefentry>
+    <refentrytitle>GMT</refentrytitle>
+    <manvolnum>1</manvolnum>
+  </citerefentry>.
+</para>
+</refsect1>
+
+</refentry>

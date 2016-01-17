@@ -19,7 +19,8 @@ struct pg_t
 typedef struct
 {
   double value;
-  unsigned char red, green, blue, alpha;
+  rgb_t rgb;
+  unsigned char alpha;
 } pg_stop_t;
 
 extern pg_t* pg_new(void)
@@ -45,18 +46,11 @@ extern void pg_set_percentage(pg_t *pg, bool value)
   pg->percentage = value;
 }
 
-extern int pg_push(pg_t *pg,
-		   double value,
-		   unsigned char red,
-		   unsigned char green,
-		   unsigned char blue,
-		   unsigned char alpha)
+extern int pg_push(pg_t *pg, double value, rgb_t rgb, unsigned char alpha)
 {
   pg_stop_t stop = {
     .value  = value,
-    .red = red,
-    .blue = blue,
-    .green = green,
+    .rgb = rgb,
     .alpha = alpha
   };
 
@@ -75,7 +69,45 @@ extern void pg_destroy(pg_t *pg)
   free(pg);
 }
 
+extern int pg_write_stream(pg_t*, FILE*);
+
 extern int pg_write(pg_t *pg, const char *path)
 {
+  int err = 1;
+
+  if (path)
+    {
+      FILE *st;
+
+      if (NULL != (st = fopen(path, "w")))
+	{
+	  err = pg_write_stream(pg, st);
+	  fclose(st);
+	}
+      else
+	btrace("failed opening %s", path);
+    }
+  else
+    {
+      err = pg_write_stream(pg, stdout);
+    }
+
+  return err;
+}
+
+extern int pg_write_stream(pg_t *pg, FILE* st)
+{
+  pg_stop_t stop;
+
+  while (gstack_pop(pg->stack, &stop) == 0)
+    {
+      fprintf(st, "%-7g %3i %3i %3i %u\n",
+	      stop.value,
+	      stop.rgb.red,
+	      stop.rgb.green,
+	      stop.rgb.blue,
+	      stop.alpha);
+    }
+
   return 0;
 }
