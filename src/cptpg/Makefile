@@ -3,7 +3,7 @@
 
 NAME = cptpg
 
-OBJ      = $(NAME).o main.o options.o
+OBJ      = $(NAME).o pg.o main.o options.o
 RUBBISH += $(OBJ) $(NAME)
 
 CFLAGS  +=
