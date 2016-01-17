@@ -5,4 +5,5 @@ purpose "convert GMT colour palette to PostGIS colour-map"
 option	"backtrace-file"    - "write backtrace to file"		string  no
 option  "backtrace-format"  - "backtrace format"  		string  no
 option 	"output"	    o "output filename"			string  no
+option  "percentage"	    p "use percentage values"		flag	off
 option 	"verbose"	    v "verbose operation" 		flag	off

@@ -28,6 +28,7 @@
   <command>cptpg</command>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-o <replaceable>file</replaceable></arg>
+    <arg choice='opt'>-p </arg>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-V </arg>
     <arg choice='opt'><replaceable>file</replaceable></arg>
@@ -60,6 +61,15 @@
   <xi:include href="../docbook/varlistentry-help.xml"/>
 
   <xi:include href="../docbook/varlistentry-output.xml"/>
+
+  <varlistentry>
+    <term>
+      <option>-p</option>, <option>--percentage</option>
+    </term>
+    <listitem>
+      <para>Convert (z) values to percentages.</para>
+    </listitem>
+  </varlistentry>
 
   <xi:include href="../docbook/varlistentry-verbose.xml"/>
 

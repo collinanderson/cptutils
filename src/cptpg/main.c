@@ -50,6 +50,7 @@ int main(int argc, char** argv)
   /* check arguments & transfer to opt structure */
 
   opt.verbose = info.verbose_given;
+  opt.percentage = info.percentage_given;
 
   /* null outfile for stdout */
 

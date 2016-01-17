@@ -4,6 +4,7 @@
 */
 
 #include <stddef.h>
+#include <math.h>
 
 #include <gstack.h>
 #include <btrace.h>
@@ -95,13 +96,79 @@ extern int pg_write(pg_t *pg, const char *path)
   return err;
 }
 
+static int less_than_last(pg_stop_t *stop, double *last)
+{
+  if (stop->value < *last)
+    {
+      *last = stop->value;
+      return 1;
+    }
+  else
+    return -1;
+}
+
+static int greater_than_last(pg_stop_t *stop, double *last)
+{
+  if (stop->value > *last)
+    {
+      *last = stop->value;
+      return 1;
+    }
+  else
+    return -1;
+}
+
+static bool pg_is_decreasing(pg_t *pg)
+{
+  double last = INFINITY;
+  return gstack_foreach(pg->stack,
+			(int (*)(void*, void*))less_than_last,
+			(void*)&last) == 1;
+}
+
+static bool pg_is_increasing(pg_t *pg)
+{
+  double last = -INFINITY;
+  return gstack_foreach(pg->stack,
+			(int (*)(void*, void*))greater_than_last,
+			(void*)&last) == 1;
+}
+
+static int pg_coerce_decreasing(pg_t *pg)
+{
+  if (pg_is_decreasing(pg))
+    return 0;
+
+  if (pg_is_increasing(pg))
+    {
+      gstack_reverse(pg->stack);
+      return 0;
+    }
+
+  btrace("neither increasing nor decreasing, corrupt cpt?");
+
+  return 1;
+}
+
 extern int pg_write_stream(pg_t *pg, FILE* st)
 {
+  if (pg_coerce_decreasing(pg) != 0)
+    {
+      btrace("failed to coerce decreasing");
+      return 1;
+    }
+
   pg_stop_t stop;
+  const char *format;
+
+  if (pg->percentage)
+    format = "%7.3f%% %3i %3i %3i %u\n";
+  else
+    format = "%-7g %3i %3i %3i %u\n";
 
   while (gstack_pop(pg->stack, &stop) == 0)
     {
-      fprintf(st, "%-7g %3i %3i %3i %u\n",
+      fprintf(st, format,
 	      stop.value,
 	      stop.rgb.red,
 	      stop.rgb.green,
