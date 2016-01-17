@@ -7,7 +7,7 @@ OBJ      = $(NAME).o pg.o main.o options.o
 RUBBISH += $(OBJ) $(NAME)
 
 CFLAGS  +=
-LDLIBS  += -lcpt -lfill -lbt
+LDLIBS  += -lcpt -lfill -lbt -lgstk
 
 default : all
 
