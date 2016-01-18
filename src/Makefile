@@ -1,4 +1,4 @@
-SRC      = common avlcpt cptcat cptclip cptcont \
+SRC      = common avlcpt cptpg cptcat cptclip cptcont \
 	   cptinfo cptsvg cpthsv gimpsvg gimplut \
 	   gplcpt pspsvg pssvg svgx xycpt
 RUBBISH += *~
@@ -41,10 +41,9 @@ test check :
 unit :
 	$(MAKE) -C unit unit
 
-veryclean : 
+veryclean :
 	$(RM) $(CONFIG)
 
 .PHONY : all install install-dirs clean test check unit
 
 include Common.mk
-
