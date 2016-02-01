@@ -1,5 +1,8 @@
 Changes
 
+1.63 (pending)
+  - svg-reader handles rgb percentages
+
 1.62 (18 Jan 2016)
   - added the cptpg program
   - removed border from svg previews
