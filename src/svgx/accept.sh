@@ -114,4 +114,14 @@ assert_raises "./svgx -t cpt -o $cpt $svg" 0
 assert_raises "[ -e $cpt ]" 0
 rm -f $cpt
 
+# handle rgb percentages
+
+base="rgb-percentage"
+svg="$fixtures/$base.svg"
+cpt="$base.cpt"
+assert_raises "./svgx -t cpt -o $cpt $svg" 0
+assert_raises "[ -e $cpt ]" 0
+assert "equal-cpt $cpt accept/$cpt" 'true'
+rm -f $cpt
+
 source accept-teardown.sh

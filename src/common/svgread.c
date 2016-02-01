@@ -496,6 +496,24 @@ static int parse_colour(char *st, rgb_t *rgb, double *opacity)
       return 0;
     }
 
+  double c[3];
+
+  if (sscanf(st, "rgb(%lf%%,%lf%%,%lf%%)", c, c+1, c+2) == 3)
+    {
+      for (int i = 0 ; i < 3 ; i++)
+	{
+	  if (c[i] < 0.0 || c[i] > 100.0)
+	    {
+	      btrace("bad percentage (%f%%) in rgb %s", c[i], st);
+	      return 1;
+	    }
+
+	  c[i] /= 100.0;
+	}
+
+      return rgbD_to_rgb(c, rgb);
+    }
+
   if (sscanf(st, "rgb(%i,%i,%i)", &r, &g, &b) == 3)
     {
       rgb->red   = r;
