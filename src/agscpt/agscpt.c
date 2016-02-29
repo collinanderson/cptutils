@@ -49,7 +49,7 @@ extern int agscpt(agscpt_opt_t opt)
 #define NAME_COLUMN 1
 #define OLE_COLUMN 3
 
-  for (int i=0; i<table->num_cols; i++)
+  for (int i=0 ; i < table->num_cols ; i++)
     {
       MdbColumn *col = g_ptr_array_index(table->columns,i);
       printf("%s\n", col->name);
@@ -69,6 +69,13 @@ extern int agscpt(agscpt_opt_t opt)
       char *name = bound_values[NAME_COLUMN];
       printf("%s %s\n", col->name, name);
 
+      /* at present we just dump the blobs */
+
+      char path[strlen(name) + 5];
+      sprintf(path, "%s.dat", name);
+
+      FILE *stream = fopen(path, "w");
+
       col = g_ptr_array_index(table->columns, OLE_COLUMN);
       if (col->col_type != MDB_OLE)
 	{
@@ -78,10 +85,11 @@ extern int agscpt(agscpt_opt_t opt)
 	}
       size_t ole_length;
       char *ole = mdb_ole_read_full(mdb, col, &ole_length);
-      printf("%s %zi\n", col->name, ole_length);
 
-      // now use gsf_ole to parse the fucker
+      fwrite(ole, ole_length, 1, stream);
+      fclose(stream);
 
+      free(ole);
     }
 
   mdb_free_tabledef(table);
