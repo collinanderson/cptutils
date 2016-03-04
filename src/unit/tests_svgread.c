@@ -7,7 +7,7 @@
 #include "fixture.h"
 #include "tests_svgread.h"
 
-CU_TestInfo tests_svgread[] = 
+CU_TestInfo tests_svgread[] =
   {
     {"fixtures", test_svgread_fixtures},
     {"file does not exist", test_svgread_nofile},
@@ -29,7 +29,8 @@ extern void test_svgread_fixtures(void)
     "punaisa_01.svg",
     "radial-eclipse.svg",
     "red-green-blue.svg",
-    "subtle.svg"
+    "subtle.svg",
+    "rgb-percentage.svg"
   };
   size_t i, nfile = sizeof(files)/sizeof(char*);
 
@@ -37,7 +38,7 @@ extern void test_svgread_fixtures(void)
     {
       svg_list_t* svglist;
 
-      CU_TEST_FATAL( (svglist = svg_list_new()) != NULL ); 
+      CU_TEST_FATAL( (svglist = svg_list_new()) != NULL );
       CU_TEST_FATAL( fixture(buf, n, "svg", files[i]) < n );
       CU_ASSERT( svg_read(buf, svglist) == 0 );
       CU_ASSERT( svg_list_size(svglist) > 0 );
@@ -49,7 +50,7 @@ extern void test_svgread_nofile(void)
 {
   svg_list_t* svglist;
 
-  CU_TEST_FATAL( (svglist = svg_list_new()) != NULL ); 
+  CU_TEST_FATAL( (svglist = svg_list_new()) != NULL );
   CU_ASSERT( svg_read("/tmp/no-such-file", svglist) != 0 );
   CU_ASSERT( svg_list_size(svglist) == 0 );
   svg_list_destroy(svglist);

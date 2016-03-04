@@ -255,36 +255,22 @@ static int svg_write_mem(xmlTextWriter *writer,
       if (svg_attribute(writer, "fill", str, "rect") != 0)
 	return 1;
 
-      if (snprintf(str, BUFSZ, "%zu", preview->border) >= BUFSZ)
+      if (svg_attribute(writer, "x", "0", "rect") != 0)
 	return 1;
 
-      if (svg_attribute(writer, "x", str, "rect") != 0)
-	return 1;
-
-      if (svg_attribute(writer, "y", str, "rect") != 0)
+      if (svg_attribute(writer, "y", "0", "rect") != 0)
 	return 1;
       
-      if (snprintf(str, BUFSZ, "%zu", 
-		   preview->width - 2 * preview->border) >= BUFSZ)
+      if (snprintf(str, BUFSZ, "%zu", preview->width) >= BUFSZ)
 	return 1;
 
       if (svg_attribute(writer, "width", str, "rect") != 0)
 	return 1;
       
-      if (snprintf(str, BUFSZ, "%zu", 
-		   preview->height - 2 * preview->border) >= BUFSZ)
+      if (snprintf(str, BUFSZ, "%zu", preview->height) >= BUFSZ)
 	return 1;
 
       if (svg_attribute(writer, "height", str, "rect") != 0)
-	return 1;
-
-      if (svg_attribute(writer, "stroke", "black", "rect") != 0)
-	return 1;
-
-      if (snprintf(str, BUFSZ, "%zu", preview->stroke) >= BUFSZ)
-	return 1;
-  
-      if (svg_attribute(writer, "stroke-width", str, "rect") != 0)
 	return 1;
 
       if ( xmlTextWriterEndElement(writer) < 0 )

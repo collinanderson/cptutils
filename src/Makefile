@@ -1,6 +1,7 @@
 SRC = common avlcpt cptcat cptclip cptcont cptinfo cptsvg \
 	cptqml cpthsv gimpsvg gimplut gplcpt pspsvg pssvg \
 	svgx xycpt
+
 RUBBISH += *~
 CONFIG += Common.mk
 

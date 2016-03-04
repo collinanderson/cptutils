@@ -27,6 +27,7 @@ gdata = {
     'grd' : ['Photoshop gradient', ['grd5'], 'grd', True],
     'inc' : ['POV-Ray header', ['pov'], 'inc', False],
     'lut' : ['Medcon lookup table', [], 'lut', False],
+    'pg'  : ['PostGIS colour map', [], 'pg', False],
     'png' : ['PNG image', [], 'png', False],
     'psp' : ['PaintShop Pro gradient', ['grd3', 'jgd'], 'PspGradient', False],
     'sao' : ['DS9/SAO colour table', [], 'sao', False],
@@ -60,7 +61,8 @@ for gtype, galiases in gtypealias.iteritems() :
 gajmat = {
     'avl' : { 'cpt' : 'avlcpt' },
     'gpl' : { 'cpt' : 'gplcpt' },
-    'cpt' : { 'svg' : 'cptsvg' },
+    'cpt' : { 'svg' : 'cptsvg',
+              'pg'  : 'cptpg' },
     'svg' : { 'cpt' : 'svgcpt',
               'ggr' : 'svggimp',
               'psp' : 'svgpsp',

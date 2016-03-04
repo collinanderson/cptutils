@@ -1,5 +1,12 @@
 Changes
 
+1.63 (pending)
+  - svg-reader handles rgb percentages
+
+1.62 (18 Jan 2016)
+  - added the cptpg program
+  - removed border from svg previews
+
 1.61 (21 Dec 2015)
   - Fix for UCS-2 to UTF-8 conversion of Japanese names titles
     in pssvg
