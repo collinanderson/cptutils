@@ -1,5 +1,0 @@
-DTD retrieved from
-
-  https://raw.githubusercontent.com/qgis/QGIS/master/qgis.dtd
-
-21/10/2015

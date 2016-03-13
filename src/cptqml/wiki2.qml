@@ -1,5 +1,4 @@
-<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd'
-'SYSTEM'>
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
 <qgis version="1.6.0-Copiapo" minimumScale="1" maximumScale="1e+08" hasScaleBasedVisibilityFlag="0">
   <transparencyLevelInt>255</transparencyLevelInt>
   <rasterproperties>
