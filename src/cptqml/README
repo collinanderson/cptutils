@@ -3,7 +3,9 @@ load a qml file into QGis so that I could inspect it, the dev
 mailing list does not respond to queries and the DTD for the
 qml format is hoplessly broken.
 
-So I'll abandon this for now, perhaps one day a QGis user who
-knows how to inspect the style file will contact me.
-
 Update 13 March, tried a question on stackoverflow GIS
+
+Still to do - at the moment we always create a continuous
+'interpolated' scale, and we only use the left-hand of the
+cpt segments (so the last colour is missing). Not quite sure
+how QGIS does discrete scales, where is the break?
