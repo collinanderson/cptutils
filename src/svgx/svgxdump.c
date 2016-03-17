@@ -510,6 +510,97 @@ extern int svgpov_dump(const svg_t *svg, svgx_opt_t *opt)
   return 0;
 }
 
+/* qgis */
+
+static int svgqgis(const svg_t *svg, qgis_t *qgis)
+{
+  int n, m;
+  svg_node_t *node;
+
+  /* count & allocate */
+
+  m = svg_num_stops(svg);
+
+  if (m < 2)
+    {
+      btrace("bad number of stops : %i", m);
+      return 1;
+    }
+
+  if (gpt_stops_alloc(gpt,m) != 0)
+    {
+      btrace("failed alloc for %i stops", m);
+      return 1;
+    }
+
+  /* convert */
+
+  for (n=0, node = svg->nodes ; node ; n++,node = node->r)
+    {
+      gpt_stop_t stop;
+      rgb_t rgb;
+      double c[3];
+
+      rgb = node->stop.colour;
+
+      if (rgb_to_rgbD(rgb,c) != 0)
+	{
+	  btrace("failed conversion to rgbD");
+	  return 1;
+	}
+
+      stop.z = node->stop.value/100.0;
+
+      stop.rgb[0] = c[0];
+      stop.rgb[1] = c[1];
+      stop.rgb[2] = c[2];
+
+      gpt->stop[n] = stop;
+    }
+
+  if (n != m)
+    {
+      btrace("missmatch between stops expected (%i) and found (%i)", m, n);
+      return 1;
+    }
+
+  gpt->n = n;
+
+  return 0;
+}
+
+extern int svggpt_dump(const svg_t *svg, svgx_opt_t *opt)
+{
+  if (opt->job == job_all)
+    return call_autonamed(svg, opt, "gpt", svggpt_dump);
+
+  const char *name = (char*)svg->name;
+  const char *file = opt->output.file;
+  gpt_t *gpt;
+
+  if ((gpt = gpt_new()) == NULL)
+    {
+      btrace("failed to create gpt structure");
+      return 1;
+    }
+
+  if (svggpt(svg,gpt) != 0)
+    {
+      btrace("failed to convert %s to gpt", name);
+      return 1;
+    }
+
+  if (gpt_write(file,gpt) != 0)
+    {
+      btrace("failed to write to %s", file);
+      return 1;
+    }
+
+  gpt_destroy(gpt);
+
+  return 0;
+}
+
 /* sao */
 
 static int svgsao(const svg_t *svg, sao_t *sao)
