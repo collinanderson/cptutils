@@ -17,43 +17,36 @@ CU_TestInfo tests_qgswrite[] =
 
 extern void test_qgswrite_minimal(void)
 {
-  qgs_t *qgs = qgs_new(QGS_TYPE_DISCRETE, 2);
+  qgs_t *qgs;
 
-  CU_ASSERT_PTR_NOT_NULL_FATAL(qgs);
+  CU_TEST_FATAL((qgs = qgs_new()) != NULL);
+  CU_TEST_FATAL(qgs_set_type(qgs, QGS_TYPE_INTERPOLATED) == 0);
+  CU_TEST_FATAL(qgs_set_name(qgs, "froob") == 0);
+  CU_TEST_FATAL(qgs_alloc_entries(qgs, 2) == 0);
 
   {
-    rgb_t rgb = {
-      .red   = 0,
-      .green = 0,
-      .blue  = 0
-    };
-    
+    rgb_t rgb = { 0, 0, 0 };
     qgs_entry_t entry = {
       .rgb = rgb,
-      .opacity = 255, 
+      .opacity = 255,
       .value = 0.0,
     };
-    CU_ASSERT_EQUAL_FATAL(qgs_set_entry(qgs, 0, &entry), 0);
+    CU_TEST_FATAL(qgs_set_entry(qgs, 0, &entry) == 0);
   }
 
   {
-    rgb_t rgb = {
-      .red   = 255,
-      .green = 255,
-      .blue  = 255,
-    };
-    
+    rgb_t rgb = { 255, 255, 255 };
     qgs_entry_t entry = {
       .rgb = rgb,
-      .opacity = 255, 
+      .opacity = 255,
       .value = 1.0,
     };
-    CU_ASSERT_EQUAL_FATAL(qgs_set_entry(qgs, 1, &entry), 0);
+    CU_TEST_FATAL(qgs_set_entry(qgs, 1, &entry) == 0);
   }
 
   char *path = tmpnam(NULL);
 
-  CU_ASSERT_PTR_NOT_NULL_FATAL(path);
+  CU_TEST_FATAL(path != NULL);
 
   CU_ASSERT_EQUAL(qgs_write(path, qgs), 0);
   CU_ASSERT_EQUAL(access(path, F_OK), 0);
