@@ -35,44 +35,6 @@ static int qgs_attribute(xmlTextWriter *writer,
   return 0;
 }
 
-static int qgs_write_colorRampType(xmlTextWriter *writer, qgs_t *qgs)
-{
-  if (xmlTextWriterStartElement(writer, BAD_CAST "colorRampType") < 0 )
-    {
-      btrace("error from open colorRampType");
-      return 1;
-    }
-
-  const char *type;
-
-  switch (qgs->type)
-    {
-    case QGS_TYPE_DISCRETE:
-      type = "DISCRETE";
-      break;
-    case QGS_TYPE_INTERPOLATED:
-      type = "INTERPOLATED";
-      break;
-    default:
-      btrace("no such QGS type %i in input", qgs->type);
-      return 1;
-    }
-
-  if (xmlTextWriterWriteString(writer, BAD_CAST type) < 0 )
-    {
-      btrace("error writing type string");
-      return 1;
-    }
-
-  if (xmlTextWriterEndElement(writer) < 0)
-    {
-      btrace("error from close colorRampType");
-      return 1;
-    }
-
-  return 0;
-}
-
 static int qgs_int_attribute(xmlTextWriter *writer,
 			      size_t len,
 			      const char *name,
@@ -95,31 +57,57 @@ static int qgs_double_attribute(xmlTextWriter *writer,
   return qgs_attribute(writer, name, buffer, element);
 }
 
-static int qgs_write_colorRampEntry(xmlTextWriter *writer, qgs_entry_t *entry)
+static char* stop_rgba(qgs_entry_t *entry)
 {
-  if (xmlTextWriterStartElement(writer, BAD_CAST "colorRampEntry") < 0 )
+  char *str = malloc(16);
+  snprintf(str, 16, "%i,%i,%i,%i",
+	   entry->rgb.red,
+	   entry->rgb.green,
+	   entry->rgb.blue,
+	   entry->opacity);
+
+  return str;
+}
+
+static int qgs_write_endstop(xmlTextWriter *writer,
+			     const char *name,
+			     qgs_entry_t *entry)
+{
+
+  if (xmlTextWriterStartElement(writer, BAD_CAST "prop") < 0 )
     {
-      btrace("error from open colorRampEntry");
+      btrace("error from open prop");
       return 1;
     }
 
-  if (qgs_double_attribute(writer, 10, "value", entry->value, "colorRampEntry") != 0)
+  if (qgs_attribute(writer, "k", name, "prop") != 0)
     return 1;
 
-  if (qgs_int_attribute(writer, 4, "red", (int)(entry->rgb.red), "colorRampEntry") != 0)
+  char *rgba = stop_rgba(entry);
+
+  if (qgs_attribute(writer, "v", rgba, "prop") != 0)
     return 1;
 
-  if (qgs_int_attribute(writer, 4, "green", (int)(entry->rgb.green), "colorRampEntry") != 0)
-    return 1;
-
-  if (qgs_int_attribute(writer, 4, "blue", (int)(entry->rgb.blue), "colorRampEntry") != 0)
-    return 1;
+  free(rgba);
 
   if (xmlTextWriterEndElement(writer) < 0)
     {
-      btrace("error from close colorRampEntry");
+      btrace("error from close prop");
       return 1;
     }
+
+  return 0;
+}
+
+static int qgs_write_colorramp_props(xmlTextWriter *writer, qgs_t *qgs)
+{
+  int n = qgs->n;
+
+  if (qgs_write_endstop(writer, "color1", qgs->entries) != 0)
+    return 1;
+
+  if (qgs_write_endstop(writer, "color2", qgs->entries + (n - 1)) != 0)
+    return 1;
 
   return 0;
 }
@@ -135,10 +123,11 @@ static int qgs_write_colorramp(xmlTextWriter *writer, qgs_t *qgs)
   if (qgs_attribute(writer, "type", "gradient", "colorramp") != 0)
     return 1;
 
-  if (qgs_attribute(writer, "name", "FIXME", "colorramp") != 0)
+  if (qgs_attribute(writer, "name", qgs->name, "colorramp") != 0)
     return 1;
 
-  /* FIXME */
+  if (qgs_write_colorramp_props(writer, qgs) != 0)
+    return 1;
 
   if (xmlTextWriterEndElement(writer) < 0)
     {
@@ -197,7 +186,7 @@ static int qgs_write_qgis(xmlTextWriter *writer, qgs_t *qgs)
       return 1;
     }
 
-  if (qgs_attribute(writer, "version", "0", "qgis_style") != 0)
+  if (qgs_attribute(writer, "version", "1", "qgis_style") != 0)
     return 1;
 
   if (qgs_write_symbols(writer, qgs) != 0)

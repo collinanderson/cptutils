@@ -513,6 +513,14 @@ extern int svgpov_dump(const svg_t *svg, svgx_opt_t *opt)
 
 /* qgs */
 
+static void svg_stop_to_qgs_entry(svg_stop_t stop, qgs_entry_t *entry)
+{
+  entry->rgb = stop.colour;
+  // fixme
+  entry->opacity = stop.opacity * 255;
+  entry->value = stop.value/100.0;
+}
+
 static qgs_t* svgqgs(const svg_t *svg)
 {
   /* count & create */
@@ -525,11 +533,29 @@ static qgs_t* svgqgs(const svg_t *svg)
       return NULL;
     }
 
-  qgs_t *qgs = qgs_new(QGS_TYPE_INTERPOLATED, m);
+  qgs_t *qgs;
 
-  if (qgs == NULL)
+  if ((qgs = qgs_new()) == NULL)
     {
-      btrace("failed qgs new for %i stops", m);
+      btrace("failed to allocate qgs");
+      return NULL;
+    }
+
+  if (qgs_set_name(qgs, (const char*)svg->name) != 0)
+    {
+      btrace("failed to set name for qgs");
+      return NULL;
+    }
+
+  if (qgs_set_type(qgs, QGS_TYPE_INTERPOLATED) != 0)
+    {
+      btrace("failed to set type for qgs");
+      return NULL;
+    }
+
+  if (qgs_alloc_entries(qgs, m) != 0)
+    {
+      btrace("failed qgs allocate for %i stops", m);
       return NULL;
     }
 
@@ -540,13 +566,15 @@ static qgs_t* svgqgs(const svg_t *svg)
 
   for (n = 0, node = svg->nodes ; node ; n++, node = node->r)
     {
-      qgs_entry_t entry = {
-	.rgb = node->stop.colour,
-	.opacity = node->stop.opacity,
-	.value = node->stop.value/100.0
-      };
+      qgs_entry_t entry;
 
-      qgs->entries[n] = entry;
+      svg_stop_to_qgs_entry(node->stop, &entry);
+
+      if (qgs_set_entry(qgs, n, &entry) != 0)
+	{
+	  btrace("failed to set qgs entry %zi", n);
+	  return NULL;
+	}
     }
 
   if (n != m)
@@ -563,16 +591,15 @@ extern int svgqgs_dump(const svg_t *svg, svgx_opt_t *opt)
   if (opt->job == job_all)
     return call_autonamed(svg, opt, "gpt", svggpt_dump);
 
-  const char *name = (char*)svg->name;
-  const char *file = opt->output.file;
-
   qgs_t *qgs;
 
   if ((qgs = svgqgs(svg)) == NULL)
     {
-      btrace("failed to convert %s to qgs", name);
+      btrace("failed to convert %s to qgs", (char*)svg->name);
       return 1;
     }
+
+  const char *file = opt->output.file;
 
   if (qgs_write(file, qgs) != 0)
     {
