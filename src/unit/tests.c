@@ -32,8 +32,8 @@
 #include "tests_identtab.h"
 #include "tests_pov.h"
 #include "tests_povwrite.h"
-#include "tests_qml.h"
-#include "tests_qmlwrite.h"
+#include "tests_qgs.h"
+#include "tests_qgswrite.h"
 #include "tests_sao.h"
 #include "tests_saowrite.h"
 #include "tests_stdcol.h"
@@ -71,8 +71,8 @@ static CU_SuiteInfo suites[] =
     { "identtab",   NULL, NULL, tests_identtab },
     { "pov",        NULL, NULL, tests_pov },
     { "povwrite",   NULL, NULL, tests_povwrite },
-    { "qml",        NULL, NULL, tests_qml },
-    { "qmlwrite",   NULL, NULL, tests_qmlwrite },
+    { "qgs",        NULL, NULL, tests_qgs },
+    { "qgswrite",   NULL, NULL, tests_qgswrite },
     { "sao",        NULL, NULL, tests_sao },
     { "saowrite",   NULL, NULL, tests_saowrite },
     { "stdcol",     NULL, NULL, tests_stdcol },
