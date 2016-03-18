@@ -1,8 +1,0 @@
-# gengetopt input for gplcpt
-# (c) J.J. Green 2010, 2015
-package "cptqml"
-purpose "convert GMT colour palette table to QGis style sheet"
-option  "backtrace-file"    - "write backtrace to file"	  string  no
-option  "backtrace-format"  - "backtrace format"  	  string  no
-option	"output"	    o "output filename"		  string  no
-option	"verbose"	    v "verbose operation"	  flag    off

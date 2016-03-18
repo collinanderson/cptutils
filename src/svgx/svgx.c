@@ -1,6 +1,6 @@
 /*
   svgx.c : convert svg to other formats
- 
+
   J.J. Green 2005, 2011
 */
 
@@ -46,7 +46,7 @@ extern int svgx(svgx_opt_t opt)
 	    case job_list:
 	      err = svgx_list(opt, list);
 	      break;
-	      
+
 	    case job_first:
 	      err = svgx_first(opt, list);
 	      break;
@@ -54,7 +54,7 @@ extern int svgx(svgx_opt_t opt)
 	    case job_named:
 	      err = svgx_named(opt, list);
 	      break;
-	      
+
 	    case job_all:
 	      err = svgx_all(opt, list);
 	      break;
@@ -70,7 +70,7 @@ extern int svgx(svgx_opt_t opt)
   return err;
 }
 
-/* print the gradients in the list */ 
+/* print the gradients in the list */
 
 static int svg_id(svg_t *svg, const char* fmt)
 {
@@ -102,7 +102,7 @@ static int svgx_list(svgx_opt_t opt, svg_list_t *list)
       err = svg_list_iterate(list, (int (*)(svg_t*,void*))svg_id, "%s\n");
     }
 
-  if (err)  
+  if (err)
     btrace("error listing svg");
 
   return err;
@@ -153,6 +153,7 @@ static int flatten_type(svgx_type_t type)
     case type_gpt:
       return 1;
     case type_ggr:
+    case type_qgs:
     case type_pov:
     case type_css3:
     case type_grd3:
@@ -184,13 +185,15 @@ static dump_f dump_type(svgx_type_t type)
     case type_sao:  dump = svgsao_dump;  break;
     case type_png:  dump = svgpng_dump;  break;
     case type_svg:  dump = svgsvg_dump;  break;
- 
+    case type_qgs:  dump = svgqgs_dump;  break;
+
+
     default:
 
       btrace("strange output format!");
       dump = NULL;
     }
-  
+
   return dump;
 }
 
@@ -232,7 +235,7 @@ static int svgx_single(svgx_opt_t opt, svg_t *svg)
     printf("wrote %s to %s\n",
 	   (opt.name ? opt.name : "gradient"),
 	   (file ? file : "<stdout>"));
-  
+
   return 0;
 }
 
@@ -270,8 +273,8 @@ static int svgx_all(svgx_opt_t opt, svg_list_t *list)
 
   if (flatten_type(opt.type))
     {
-      if (svg_list_iterate(list, 
-			   (int (*)(svg_t*, void*))svg_flatten2, 
+      if (svg_list_iterate(list,
+			   (int (*)(svg_t*, void*))svg_flatten2,
 			   &(opt.format.alpha)) != 0)
 	{
 	  btrace("failed coerce explicit");
@@ -281,7 +284,7 @@ static int svgx_all(svgx_opt_t opt, svg_list_t *list)
 
   int (*dump)(svg_t*, void*);
 
-  if ((dump = (int (*)(svg_t*, void*))dump_type(opt.type)) == NULL) 
+  if ((dump = (int (*)(svg_t*, void*))dump_type(opt.type)) == NULL)
     return 1;
 
   if (opt.verbose)

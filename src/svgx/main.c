@@ -1,5 +1,5 @@
 /*
-  main.c 
+  main.c
 
   part of the cptutils package
 
@@ -17,7 +17,7 @@
 
   You should have received a copy of the GNU General Public
   License along with this program; if not, write to the
-  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
   Boston, MA 02110-1301 USA
 */
 
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
       return EXIT_FAILURE;
     }
 
-  /* check arguments & transfer to opt structure */ 
+  /* check arguments & transfer to opt structure */
 
   opt.verbose    = info.verbose_flag;
   opt.permissive = ! info.strict_flag;
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 
   if (info.all_flag)
     opt.job = job_all;
-  else if (info.list_flag)  
+  else if (info.list_flag)
     opt.job = job_list;
   else if (info.select_given)
     {
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
     {
       const char* name = info.type_arg;
 
-      struct {const char* name; int type; } 
+      struct {const char* name; int type; }
       *p, types[] =
 	{
 	  {"cpt",         type_cpt },
@@ -98,6 +98,7 @@ int main(int argc, char** argv)
 	  {"ds9",         type_sao },
 	  {"png",         type_png },
 	  {"svg",         type_svg },
+	  {"qgs",         type_qgs },
 	  {NULL, 0}};
 
       for (p = types ; ; p++)
@@ -140,9 +141,9 @@ int main(int argc, char** argv)
     default:
       fprintf(stderr,"Exactly one SVG file must be specified!\n");
       options_print_help();
-      return EXIT_FAILURE; 
+      return EXIT_FAILURE;
     }
-  
+
   opt.input.file  = infile;
   opt.output.file = outfile;
 
@@ -189,7 +190,7 @@ int main(int argc, char** argv)
 	  return EXIT_FAILURE;
 	}
     }
-  
+
   switch (opt.type)
     {
     case type_png:
@@ -209,7 +210,7 @@ int main(int argc, char** argv)
       if (info.preview_flag)
 	{
 	  opt.format.svg.preview.use = true;
-	  if (svg_preview_geometry(info.geometry_arg, 
+	  if (svg_preview_geometry(info.geometry_arg,
 				   &(opt.format.svg.preview)) != 0)
 	    {
 	      fprintf(stderr,"bad argument \"%s\" to geometry option",
@@ -226,8 +227,8 @@ int main(int argc, char** argv)
       break;
     }
 
-  /* 
-     we write the translation of the svg gradient <name> to stdout 
+  /*
+     we write the translation of the svg gradient <name> to stdout
      if <name> is specified, so then we suppress verbosity
   */
 
@@ -259,21 +260,22 @@ int main(int argc, char** argv)
 	case type_sao  : tstr = "SAO (DS9) colour map"; break;
 	case type_png  : tstr = "png image"; break;
 	case type_svg  : tstr = "SVG gradient"; break;
-	  
+	case type_qgs  : tstr = "QGIS style colour map"; break;
+
 	default:
 	  fprintf(stderr,"weird output format!\n");
 	  return EXIT_FAILURE;
 	}
-	  
+
       printf("convert svg to %s\n",tstr);
       printf("%s format limits\n",
 		 (opt.permissive ? "ignoring" : "respecting"));
 
       if (opt.type == type_png)
-	printf("png output size is %zu x %zu px\n", 
-	       opt.format.png.width, 
+	printf("png output size is %zu x %zu px\n",
+	       opt.format.png.width,
 	       opt.format.png.height);
-      else if ( (opt.type == type_svg) && 
+      else if ( (opt.type == type_svg) &&
 		(opt.format.svg.preview.use) )
 	printf("svg preview size is %zu x %zu px\n",
 	       opt.format.svg.preview.width,
@@ -299,11 +301,11 @@ int main(int argc, char** argv)
 	      format = btrace_format(info.backtrace_format_arg);
 	      if (format == BTRACE_ERROR)
 		{
-		  fprintf(stderr, "no such backtrace format %s\n", 
+		  fprintf(stderr, "no such backtrace format %s\n",
 			  info.backtrace_format_arg);
 		  return EXIT_FAILURE;
 		}
-	    }	  
+	    }
 	  btrace_print(info.backtrace_file_arg, format);
 	}
     }
@@ -317,15 +319,3 @@ int main(int argc, char** argv)
 
   return (err ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-

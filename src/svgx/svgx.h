@@ -13,14 +13,15 @@
 #include "colour.h"
 
 typedef enum {
-  type_cpt, 
-  type_ggr, 
-  type_pov, 
-  type_gpt, 
-  type_css3, 
+  type_cpt,
+  type_ggr,
+  type_pov,
+  type_gpt,
+  type_css3,
   type_grd3,
-  type_sao, 
-  type_png, 
+  type_sao,
+  type_png,
+  type_qgs,
   type_svg
 } svgx_type_t;
 
@@ -33,7 +34,7 @@ typedef enum {
 
 typedef struct
 {
-  svgx_type_t type; 
+  svgx_type_t type;
   svgx_job_t job;
   bool verbose, permissive, debug;
   char *name;
@@ -63,6 +64,3 @@ typedef struct
 extern int svgx(svgx_opt_t);
 
 #endif
-
-
-

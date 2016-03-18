@@ -21,6 +21,6 @@ extern int svggrd3_dump(const svg_t*, svgx_opt_t*);
 extern int svgsao_dump(const svg_t*, svgx_opt_t*);
 extern int svgpng_dump(const svg_t*, svgx_opt_t*);
 extern int svgsvg_dump(const svg_t*, svgx_opt_t*);
-extern int svgqgis_dump(const svg_t*, svgx_opt_t*);
+extern int svgqgs_dump(const svg_t*, svgx_opt_t*);
 
 #endif

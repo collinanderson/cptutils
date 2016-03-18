@@ -15,7 +15,7 @@ OBJCSS3 = css3.o css3write.o
 OBJID   = ident.o identtab.o
 OBJODB  = odbbridge.o odb.o odbscan.o odbparse.o
 OBJSAO  = sao.o saowrite.o
-OBJQSCM = qscm.o qscmwrite.o
+OBJQGS  = qgs.o qgswrite.o
 OBJUTF8 = utf8.o
 OBJBT   = btrace.o
 
@@ -24,12 +24,12 @@ LDLIBS +=
 
 CPTULIBS = libfill.a libcpt.a libggr.a libgrd3.a libgrd5.a libgrdx.a \
 	libgstk.a libsvg.a libpov.a libident.a libodb.a libgpt.a \
-	libcss3.a libsao.a libqscm.a libutf8.a libbt.a
+	libcss3.a libsao.a libqgs.a libutf8.a libbt.a
 
 RUBBISH += $(CPTULIBS) $(OBJFILL) $(OBJCPT) $(OBJGGR) \
 	   $(OBJGRD3) $(OBJGRD5) $(OBJGRDX) \
 	   $(OBJSVG) $(OBJPOV) $(OBJID) $(OBJODB) $(OBJGPT) $(OBJCSS3) \
-	   $(OBJSAO) $(OBJQSCM) $(OBJGSTK) $(OBJUTF8) $(OBJBT)
+	   $(OBJSAO) $(OBJQGS) $(OBJGSTK) $(OBJUTF8) $(OBJBT)
 
 default : all
 
@@ -97,8 +97,8 @@ libodb.a : $(OBJODB)
 libsao.a : $(OBJSAO)
 	ar r libsao.a $(OBJSAO)
 
-libqscm.a : $(OBJQSCM)
-	ar r libqscm.a $(OBJQSCM)
+libqgs.a : $(OBJQGS)
+	ar r libqgs.a $(OBJQGS)
 
 libutf8.a : $(OBJUTF8)
 	ar r libutf8.a $(OBJUTF8)

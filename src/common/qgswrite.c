@@ -1,5 +1,5 @@
 /*
-  qscmwrite.c
+  qgswrite.c
   Copyright (c) J.J. Green 2015
 */
 
@@ -13,13 +13,13 @@
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
 
-#include "qscmwrite.h"
+#include "qgswrite.h"
 #include "btrace.h"
 
 #define ENCODING "utf-8"
 #define BUFSZ 128
 
-static int qscm_attribute(xmlTextWriter *writer,
+static int qgs_attribute(xmlTextWriter *writer,
 			  const char *name,
 			  const char *value,
 			  const char *element)
@@ -35,7 +35,7 @@ static int qscm_attribute(xmlTextWriter *writer,
   return 0;
 }
 
-static int qscm_write_colorRampType(xmlTextWriter *writer, qscm_t *qscm)
+static int qgs_write_colorRampType(xmlTextWriter *writer, qgs_t *qgs)
 {
   if (xmlTextWriterStartElement(writer, BAD_CAST "colorRampType") < 0 )
     {
@@ -45,16 +45,16 @@ static int qscm_write_colorRampType(xmlTextWriter *writer, qscm_t *qscm)
 
   const char *type;
 
-  switch (qscm->type)
+  switch (qgs->type)
     {
-    case QSCM_TYPE_DISCRETE:
+    case QGS_TYPE_DISCRETE:
       type = "DISCRETE";
       break;
-    case QSCM_TYPE_INTERPOLATED:
+    case QGS_TYPE_INTERPOLATED:
       type = "INTERPOLATED";
       break;
     default:
-      btrace("no such QSCM type %i in input", qscm->type);
+      btrace("no such QGS type %i in input", qgs->type);
       return 1;
     }
 
@@ -73,7 +73,7 @@ static int qscm_write_colorRampType(xmlTextWriter *writer, qscm_t *qscm)
   return 0;
 }
 
-static int qscm_int_attribute(xmlTextWriter *writer,
+static int qgs_int_attribute(xmlTextWriter *writer,
 			      size_t len,
 			      const char *name,
 			      int value,
@@ -81,10 +81,10 @@ static int qscm_int_attribute(xmlTextWriter *writer,
 {
   char buffer[len];
   snprintf(buffer, len, "%i", value);
-  return qscm_attribute(writer, name, buffer, element);
+  return qgs_attribute(writer, name, buffer, element);
 }
 
-static int qscm_double_attribute(xmlTextWriter *writer,
+static int qgs_double_attribute(xmlTextWriter *writer,
 				 size_t len,
 				 const char *name,
 				 double value,
@@ -92,10 +92,10 @@ static int qscm_double_attribute(xmlTextWriter *writer,
 {
   char buffer[len];
   snprintf(buffer, len, "%.3f", value);
-  return qscm_attribute(writer, name, buffer, element);
+  return qgs_attribute(writer, name, buffer, element);
 }
 
-static int qscm_write_colorRampEntry(xmlTextWriter *writer, qscm_entry_t *entry)
+static int qgs_write_colorRampEntry(xmlTextWriter *writer, qgs_entry_t *entry)
 {
   if (xmlTextWriterStartElement(writer, BAD_CAST "colorRampEntry") < 0 )
     {
@@ -103,16 +103,16 @@ static int qscm_write_colorRampEntry(xmlTextWriter *writer, qscm_entry_t *entry)
       return 1;
     }
 
-  if (qscm_double_attribute(writer, 10, "value", entry->value, "colorRampEntry") != 0)
+  if (qgs_double_attribute(writer, 10, "value", entry->value, "colorRampEntry") != 0)
     return 1;
 
-  if (qscm_int_attribute(writer, 4, "red", (int)(entry->red), "colorRampEntry") != 0)
+  if (qgs_int_attribute(writer, 4, "red", (int)(entry->rgb.red), "colorRampEntry") != 0)
     return 1;
 
-  if (qscm_int_attribute(writer, 4, "green", (int)(entry->green), "colorRampEntry") != 0)
+  if (qgs_int_attribute(writer, 4, "green", (int)(entry->rgb.green), "colorRampEntry") != 0)
     return 1;
 
-  if (qscm_int_attribute(writer, 4, "blue", (int)(entry->blue), "colorRampEntry") != 0)
+  if (qgs_int_attribute(writer, 4, "blue", (int)(entry->rgb.blue), "colorRampEntry") != 0)
     return 1;
 
   if (xmlTextWriterEndElement(writer) < 0)
@@ -124,75 +124,91 @@ static int qscm_write_colorRampEntry(xmlTextWriter *writer, qscm_entry_t *entry)
   return 0;
 }
 
-static int qscm_write_customColorRamp(xmlTextWriter *writer, qscm_t *qscm)
+static int qgs_write_colorramp(xmlTextWriter *writer, qgs_t *qgs)
 {
-  if (xmlTextWriterStartElement(writer, BAD_CAST "customColorRamp") < 0 )
+  if (xmlTextWriterStartElement(writer, BAD_CAST "colorramp") < 0 )
     {
-      btrace("error from open customColorRamp");
+      btrace("error from open coloramp");
       return 1;
     }
 
-  if (qscm_write_colorRampType(writer, qscm) != 0)
-    {
-      btrace("failed to write colorRampType");
-      return 1;
-    }
+  if (qgs_attribute(writer, "type", "gradient", "colorramp") != 0)
+    return 1;
 
-  for (size_t i = 0 ; i < qscm->n ; i++)
-    {
-      if (qscm_write_colorRampEntry(writer, qscm->entries + i) != 0)
-	{
-	  btrace("failed to write colorRampEntry %zi", i);
-	  return 1;
-	}
-    }
+  if (qgs_attribute(writer, "name", "FIXME", "colorramp") != 0)
+    return 1;
+
+  /* FIXME */
 
   if (xmlTextWriterEndElement(writer) < 0)
     {
-      btrace("error from close customColorRamp");
+      btrace("error from close colorramp");
       return 1;
     }
 
   return 0;
 }
 
-static int qscm_write_rasterproperties(xmlTextWriter *writer, qscm_t *qscm)
+static int qgs_write_colorramps(xmlTextWriter *writer, qgs_t *qgs)
 {
-  if (xmlTextWriterStartElement(writer, BAD_CAST "rasterproperties") < 0 )
+  if (xmlTextWriterStartElement(writer, BAD_CAST "colorramps") < 0 )
     {
-      btrace("error from open rasterproperties");
+      btrace("error from open colorramps");
       return 1;
     }
 
-  if (qscm_write_customColorRamp(writer, qscm) != 0)
+  if (qgs_write_colorramp(writer, qgs) != 0)
     {
-      btrace("failed to write customColorRamp");
+      btrace("failed to write colorramp");
       return 1;
     }
 
   if (xmlTextWriterEndElement(writer) < 0)
     {
-      btrace("error from close rasterproperties");
+      btrace("error from close colorramps");
       return 1;
     }
 
   return 0;
 }
 
-static int qscm_write_qgis(xmlTextWriter *writer, qscm_t *qscm)
+static int qgs_write_symbols(xmlTextWriter *writer, qgs_t *qgs)
 {
-  if (xmlTextWriterStartElement(writer, BAD_CAST "qgis") < 0 )
+  if (xmlTextWriterStartElement(writer, BAD_CAST "symbols") < 0 )
+    {
+      btrace("error from open symbols");
+      return 1;
+    }
+
+  if (xmlTextWriterEndElement(writer) < 0)
+    {
+      btrace("error from close symbols");
+      return 1;
+    }
+
+  return 0;
+}
+
+static int qgs_write_qgis(xmlTextWriter *writer, qgs_t *qgs)
+{
+  if (xmlTextWriterStartElement(writer, BAD_CAST "qgis_style") < 0 )
     {
       btrace("error from open qgis");
       return 1;
     }
 
-  if (qscm_attribute(writer, "version", "1.6.0-Copiapo", "qgis") != 0)
+  if (qgs_attribute(writer, "version", "0", "qgis_style") != 0)
     return 1;
 
-  if (qscm_write_rasterproperties(writer, qscm) != 0)
+  if (qgs_write_symbols(writer, qgs) != 0)
     {
-      btrace("failed to write rasterproperties");
+      btrace("failed to write symbols");
+      return 1;
+    }
+
+  if (qgs_write_colorramps(writer, qgs) != 0)
+    {
+      btrace("failed to write colorramps");
       return 1;
     }
 
@@ -205,27 +221,27 @@ static int qscm_write_qgis(xmlTextWriter *writer, qscm_t *qscm)
   return 0;
 }
 
-static int qscm_write_mem(xmlTextWriter *writer, qscm_t *qscm)
+static int qgs_write_mem(xmlTextWriter *writer, qgs_t *qgs)
 {
-  if (qscm->n < 2)
+  if (qgs->n < 2)
     {
-      btrace("not enough stops for a gradient (%zi)", qscm->n);
+      btrace("not enough stops for a gradient (%zi)", qgs->n);
       return 1;
     }
 
-  if (xmlTextWriterStartDocument(writer, NULL, ENCODING, NULL) < 0)
+  if (xmlTextWriterWriteDTD(writer, BAD_CAST "qgis_style", NULL, NULL, NULL) < 0)
     {
-      btrace("error from start document");
+      btrace("error writing doctype");
       return 1;
     }
 
-  if (qscm_write_qgis(writer, qscm) != 0)
+  if (qgs_write_qgis(writer, qgs) != 0)
     {
       btrace("failed to write qgis");
       return 1;
     }
 
-  if ( xmlTextWriterEndDocument(writer) < 0 )
+  if (xmlTextWriterEndDocument(writer) < 0)
     {
       btrace("error from end document");
       return 1;
@@ -234,7 +250,7 @@ static int qscm_write_mem(xmlTextWriter *writer, qscm_t *qscm)
   return 0;
 }
 
-extern int qscm_write(const char *path, qscm_t *qscm)
+extern int qgs_write(const char *path, qgs_t *qgs)
 {
   xmlBuffer *buffer;
   int err = 0;
@@ -251,7 +267,7 @@ extern int qscm_write(const char *path, qscm_t *qscm)
             using the buffer
           */
 
-          if (qscm_write_mem(writer, qscm) == 0)
+          if (qgs_write_mem(writer, qgs) == 0)
             {
               xmlFreeTextWriter(writer);
 
