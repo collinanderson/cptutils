@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-elementFormDefault="qualified" attributeFormDefault="unqualified">
-  <!-- XML Schema Generated from XML Document on Sat Mar 19 2016 10:42:38 GMT+0000 (GMT) -->
-  <!-- with XmlGrid.net Free Online Service http://xmlgrid.net -->
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified">
+  <!--
+      XML Schema Generated from XML Document on Sat Mar 19 2016
+      10:42:38 GMT+0000 (GMT) with XmlGrid.net Free Online Service
+      http://xmlgrid.net.  The input being colorbrewer_symbols.xml
+      from Anita Graser's (https://github.com/anitagraser/) QGIS
+      resources.
+  -->
   <xs:element name="qgis_style">
     <xs:complexType>
       <xs:sequence>
