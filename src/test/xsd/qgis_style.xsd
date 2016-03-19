@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <!-- XML Schema Generated from XML Document on Sat Mar 19 2016 10:42:38 GMT+0000 (GMT) -->
+  <!-- with XmlGrid.net Free Online Service http://xmlgrid.net -->
+  <xs:element name="qgis_style">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="symbols"></xs:element>
+        <xs:element name="colorramps">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="colorramp" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="prop" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:attribute name="k" type="xs:string">
+                        </xs:attribute>
+                        <xs:attribute name="v" type="xs:string">
+                        </xs:attribute>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                  <xs:attribute name="type" type="xs:string">
+                  </xs:attribute>
+                  <xs:attribute name="name" type="xs:string">
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="version" type="xs:int"></xs:attribute>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

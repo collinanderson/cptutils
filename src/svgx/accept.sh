@@ -77,6 +77,12 @@ do
 	assert_raises "./svgx -t svg -s $name -o $svg $fixtures/$svgsrc" 0
 	assert "equal-svg $svg accept/$svg" 'true'
 	rm -f "$svg"
+
+	qgs="$base-$name.qgs"
+	assert_raises "./svgx -t qgs -s $name -o $qgs $fixtures/$svgsrc" 0
+	assert "equal-qgs $qgs accept/$qgs" 'true'
+	assert "valid-qgs $qgs" 'true'
+	rm -f "$qgs"
     done
 done
 

@@ -108,6 +108,11 @@ if test $opt_enable_tests = yes; then
    if test "$XML2" = no ; then
       AC_MSG_ERROR(need xml2 program)
    fi
+
+   AC_PATH_PROG(XMLSTARLET, xmlstarlet, no)
+   if test "$XMLSTARLET" = no ; then
+      AC_MSG_ERROR(need xmlstarlet program)
+   fi
 fi
 
 opt_enable_coverage=no

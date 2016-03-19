@@ -5,13 +5,17 @@ compiler:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq
-      bc gengetopt gperf xml2
+      bc
+      docbook-xsl
+      gengetopt
+      gperf
       libxml2-dev
       libpng12-dev
       libjansson-dev
       libcunit1-dev
+      xml2
+      xmlstarlet
       xsltproc
-      docbook-xsl
   - sudo pip install cpp-coveralls
   - autoconf
   - autoheader
