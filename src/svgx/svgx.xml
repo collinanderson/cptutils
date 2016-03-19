@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-  "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+ "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 
-<refentry id='svgx1'
+<refentry id='svgx'
 	  xmlns:xi="http://www.w3.org/2001/XInclude">
 
 <xi:include href="../docbook/refentryinfo-date.xml"/>
@@ -45,8 +45,8 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>
-  The <command>svgx</command> program extracts and converts 
-  gradients in an SVG file.  Unlike most of the other 
+  The <command>svgx</command> program extracts and converts
+  gradients in an SVG file.  Unlike most of the other
   file formats handled by the <package>cptutils</package>
   package, SVG files may contain multiple gradients, so
   this program operates a little differently to the other
@@ -54,44 +54,45 @@
 </para>
 
 <para>
-  There are 4 modes of operation: The default is to extract 
-  the first gradient found in the file, or one can specify 
-  <option>-l</option> to list the names of all gradients in 
-  the file; <option>-s</option> to extract the gradient with 
-  the specified name or <option>-a</option> to extract all 
+  There are 4 modes of operation: The default is to extract
+  the first gradient found in the file, or one can specify
+  <option>-l</option> to list the names of all gradients in
+  the file; <option>-s</option> to extract the gradient with
+  the specified name or <option>-a</option> to extract all
   of the gradients.
 </para>
 
 <para>
   The output format is specified by the <option>-t</option> option
-  as listed below (in fact there are several aliases for each 
-  format: <option>jgd</option> for <option>psp</option>, 
-  <option>gimp</option> for <option>ggr</option>, and so on).  
-  The 
-  <command>svgcpt</command>, 
-  <command>svggimp</command>, 
-  <command>svggpt</command>, 
-  <command>svgcss3</command>, 
-  <command>svgpsp</command>,  
-  <command>svgpov</command>,  
+  as listed below (in fact there are several aliases for each
+  format: <option>jgd</option> for <option>psp</option>,
+  <option>gimp</option> for <option>ggr</option>, and so on).
+  The
+  <command>svgcpt</command>,
+  <command>svggimp</command>,
+  <command>svggpt</command>,
+  <command>svgcss3</command>,
+  <command>svgpsp</command>,
+  <command>svgpov</command>,
   <command>svgpng</command>,
+  <command>svgqgs</command>,
   <command>svgsao</command> and
   <command>svgsvg</command>
-  programs are wrappers around <command>svgx</command> which use 
+  programs are wrappers around <command>svgx</command> which use
   the <option>-t</option> switch to specify output type.
 </para>
 
 <para>
   Atypically, the input SVG file is a mandatory argument.
-  The program will write to 
-  <filename moreinfo="refentry" path="/dev">stdout</filename> 
-  if the <option>-o</option> option is not specified except 
-  when <option>-a</option> has been specified: then files will 
+  The program will write to
+  <filename moreinfo="refentry" path="/dev">stdout</filename>
+  if the <option>-o</option> option is not specified except
+  when <option>-a</option> has been specified: then files will
   be produced (with names taken from those of the gradients).
 </para>
 
 <para>
-  Note that some of the SVG conversions require that the 
+  Note that some of the SVG conversions require that the
   <literal>en_US.utf8</literal> locale is enabled.  How this
   is done will depend on your operating system.
 </para>
@@ -110,9 +111,9 @@
   </term>
   <listitem>
     <para>
-      Extract all gradients, which will have filenames derived 
-      from the gradient names. If this option is used then the 
-      argument of the <option>-o</option> option will be 
+      Extract all gradients, which will have filenames derived
+      from the gradient names. If this option is used then the
+      argument of the <option>-o</option> option will be
       interpreted as the output directory.
     </para>
   </listitem>
@@ -150,13 +151,13 @@
     </term>
     <listitem>
       <para>
-	Write the output to <replaceable>path</replaceable>, 
-	rather than 
+	Write the output to <replaceable>path</replaceable>,
+	rather than
 	<filename moreinfo="refentry" path="/dev">stdout</filename>.
       </para>
       <para>
 	If the <option>-a</option> option is specified then
-	the <replaceable>path</replaceable> argument must be a 
+	the <replaceable>path</replaceable> argument must be a
 	directory (which exists) and the output files will be
 	written into this directory.
       </para>
@@ -171,7 +172,7 @@
   </term>
   <listitem>
   <para>
-    Do not create files which break limits of the format specification. 
+    Do not create files which break limits of the format specification.
     In particular, do not create POV-Ray headers with more than 255 stops.
   </para>
   </listitem>
@@ -184,9 +185,9 @@
   </term>
   <listitem>
     <para>
-      Extract the gradient with the specified 
-      <replaceable>name</replaceable>, see the 
-      <option>-l</option> output for a list of 
+      Extract the gradient with the specified
+      <replaceable>name</replaceable>, see the
+      <option>-l</option> output for a list of
       possible values.
     </para>
   </listitem>
@@ -199,15 +200,16 @@
   </term>
   <listitem>
     <para>
-      Set the output   <replaceable>format</replaceable>, 
-      which should be one of 
-      <option>cpt</option>, 
-      <option>css3</option>, 
-      <option>ggr</option>, 
-      <option>gpt</option>, 
-      <option>psp</option>, 
-      <option>pov</option>, 
-      <option>png</option>, 
+      Set the output   <replaceable>format</replaceable>,
+      which should be one of
+      <option>cpt</option>,
+      <option>css3</option>,
+      <option>ggr</option>,
+      <option>gpt</option>,
+      <option>psp</option>,
+      <option>pov</option>,
+      <option>png</option>,
+      <option>qgs</option>,
       <option>sao</option> or
       <option>svg</option>.
     </para>
@@ -230,7 +232,7 @@
 </para>
 
 <programlisting>
-svgx -v -l old.svg 
+svgx -v -l old.svg
 </programlisting>
 
 <para>
@@ -240,17 +242,17 @@ svgx -v -l old.svg
 </para>
 
 <programlisting>
-svgx -v -t cpt -s "Sunny Road" -o sunny_road.cpt old.svg 
+svgx -v -t cpt -s "Sunny Road" -o sunny_road.cpt old.svg
 </programlisting>
 
 <para>
-  Extract all of the svg gradients from the file 
+  Extract all of the svg gradients from the file
   <filename>kittens.svg</filename> and give each of
   them a preview:
 </para>
 
 <programlisting>
-svgx -v -t svg -a -p kittens.svg  
+svgx -v -t svg -a -p kittens.svg
 </programlisting>
 
 </refsect1>
@@ -258,7 +260,7 @@ svgx -v -t svg -a -p kittens.svg
 <refsect1 id='caveats'><title>CAVEATS</title>
 
 <para>
-  An ill-formed SVG gradient may be translated to rubbish 
+  An ill-formed SVG gradient may be translated to rubbish
   while not reporting an error.
 </para>
 
@@ -284,4 +286,3 @@ svgx -v -t svg -a -p kittens.svg
 </refsect1>
 
 </refentry>
-

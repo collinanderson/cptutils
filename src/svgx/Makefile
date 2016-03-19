@@ -27,7 +27,7 @@ all : svgx svgx.1
 install : all
 	$(INSTALL) -m755 svgx $(DESTDIR)$(bindir)/svgx
 	$(INSTALL) -m644 svgx.1 $(DESTDIR)$(mandir)/man1/svgx.1
-	for type in cpt css3 gimp gpt png pov psp sao svg ; do \
+	for type in cpt css3 gimp gpt png pov psp qgs sao svg ; do \
 	  base="svg$$type" ; \
 	  $(INSTALL) -m755 wrapper/$$base.sh $(DESTDIR)$(bindir)/$$base ; \
 	  ln -f -s svgx.1 $(DESTDIR)$(mandir)/man1/$$base.1 ; \

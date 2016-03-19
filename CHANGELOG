@@ -2,6 +2,7 @@ Changes
 
 1.63 (pending)
   - svg-reader handles rgb percentages
+  - added svgqgs which converts svg to QGIS style
 
 1.62 (18 Jan 2016)
   - added the cptpg program
