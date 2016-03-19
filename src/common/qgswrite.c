@@ -9,6 +9,7 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
@@ -35,36 +36,37 @@ static int qgs_attribute(xmlTextWriter *writer,
   return 0;
 }
 
-static int qgs_int_attribute(xmlTextWriter *writer,
-			      size_t len,
-			      const char *name,
-			      int value,
-			      const char *element)
+/* 4*3 + 3 + 1 */
+
+#define END_STOP_LEN 16
+
+static char* end_stop(qgs_entry_t *entry)
 {
-  char buffer[len];
-  snprintf(buffer, len, "%i", value);
-  return qgs_attribute(writer, name, buffer, element);
+  char *str = malloc(END_STOP_LEN);
+  if (snprintf(str, END_STOP_LEN, "%i,%i,%i,%i",
+	       entry->rgb.red,
+	       entry->rgb.green,
+	       entry->rgb.blue,
+	       entry->opacity) >= END_STOP_LEN)
+    return NULL;
+
+  return str;
 }
 
-static int qgs_double_attribute(xmlTextWriter *writer,
-				 size_t len,
-				 const char *name,
-				 double value,
-				 const char *element)
-{
-  char buffer[len];
-  snprintf(buffer, len, "%.3f", value);
-  return qgs_attribute(writer, name, buffer, element);
-}
+/* 6 + 4*3 + 4 + 1 */
 
-static char* stop_rgba(qgs_entry_t *entry)
+#define MID_STOP_LEN 23
+
+static char* mid_stop(qgs_entry_t *entry)
 {
-  char *str = malloc(16);
-  snprintf(str, 16, "%i,%i,%i,%i",
-	   entry->rgb.red,
-	   entry->rgb.green,
-	   entry->rgb.blue,
-	   entry->opacity);
+  char *str = malloc(MID_STOP_LEN);
+  if (snprintf(str, MID_STOP_LEN, "%.4f;%i,%i,%i,%i",
+	       entry->value,
+	       entry->rgb.red,
+	       entry->rgb.green,
+	       entry->rgb.blue,
+	       entry->opacity) >= MID_STOP_LEN)
+    return NULL;
 
   return str;
 }
@@ -73,7 +75,6 @@ static int qgs_write_endstop(xmlTextWriter *writer,
 			     const char *name,
 			     qgs_entry_t *entry)
 {
-
   if (xmlTextWriterStartElement(writer, BAD_CAST "prop") < 0 )
     {
       btrace("error from open prop");
@@ -83,12 +84,92 @@ static int qgs_write_endstop(xmlTextWriter *writer,
   if (qgs_attribute(writer, "k", name, "prop") != 0)
     return 1;
 
-  char *rgba = stop_rgba(entry);
+  char *stop;
 
-  if (qgs_attribute(writer, "v", rgba, "prop") != 0)
+  if ((stop = end_stop(entry)) == NULL)
+    {
+      btrace("error creating endstop");
+      return 1;
+    }
+
+  if (qgs_attribute(writer, "v", stop, "prop") != 0)
     return 1;
 
-  free(rgba);
+  free(stop);
+
+  if (xmlTextWriterEndElement(writer) < 0)
+    {
+      btrace("error from close prop");
+      return 1;
+    }
+
+  return 0;
+}
+
+static char* mid_stops_string(qgs_t *qgs)
+{
+  int n = qgs->n;
+  char *stops[n-2];
+
+  for (int i = 0 ; i < n-2 ; i++)
+    {
+      if ((stops[i] = mid_stop(qgs->entries + i + 1)) == NULL)
+	return NULL;
+    }
+
+  size_t sz = (n-2) * MID_STOP_LEN + n;
+  char *buffer;
+
+  if ((buffer = malloc(sz)) == NULL)
+    return NULL;
+
+  char *p = buffer;
+  size_t k;
+
+  if ((k = snprintf(buffer, sz, "%s", stops[0])) >= sz)
+    {
+      btrace("stop truncation");
+      return NULL;
+    }
+
+  for (int i = 1 ; i < n-2 ; i++)
+    {
+      p += k;
+      sz -= k;
+      if ((k = snprintf(p, sz, ":%s", stops[i])) >= sz)
+	{
+	  btrace("stop truncation");
+	  return NULL;
+	}
+    }
+
+  for (int i = 0 ; i < n-2 ; i++)
+    free(stops[i]);
+
+  return buffer;
+}
+
+static int qgs_write_midstops(xmlTextWriter *writer, qgs_t *qgs)
+{
+  int n = qgs->n;
+
+  if (n < 3) return 0;
+
+  if (xmlTextWriterStartElement(writer, BAD_CAST "prop") < 0 )
+    {
+      btrace("error from open prop");
+      return 1;
+    }
+
+  if (qgs_attribute(writer, "k", "stops", "prop") != 0)
+    return 1;
+
+  char *str = mid_stops_string(qgs);
+
+  if (qgs_attribute(writer, "v", str, "prop") != 0)
+    return 1;
+
+  free(str);
 
   if (xmlTextWriterEndElement(writer) < 0)
     {
@@ -107,6 +188,9 @@ static int qgs_write_colorramp_props(xmlTextWriter *writer, qgs_t *qgs)
     return 1;
 
   if (qgs_write_endstop(writer, "color2", qgs->entries + (n - 1)) != 0)
+    return 1;
+
+  if (qgs_write_midstops(writer, qgs) != 0)
     return 1;
 
   return 0;
