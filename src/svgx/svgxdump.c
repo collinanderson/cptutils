@@ -513,11 +513,15 @@ extern int svgpov_dump(const svg_t *svg, svgx_opt_t *opt)
 
 /* qgs */
 
+static unsigned char unit_uchar(double x)
+{
+  return nearbyint(x * 255);
+}
+
 static void svg_stop_to_qgs_entry(svg_stop_t stop, qgs_entry_t *entry)
 {
   entry->rgb = stop.colour;
-  // fixme
-  entry->opacity = stop.opacity * 255;
+  entry->opacity = unit_uchar(stop.opacity);
   entry->value = stop.value/100.0;
 }
 
