@@ -1,4 +1,4 @@
-SRC = common avlcpt cptcat cptclip cptcont cptinfo cptsvg \
+SRC = common avlcpt cptcat cptclip cptcont cptinfo cptsvg cptpg \
 	cpthsv gimpsvg gimplut gplcpt pspsvg pssvg svgx xycpt
 
 RUBBISH += *~
