@@ -21,9 +21,9 @@
 #define BUFSZ 128
 
 static int qgs_attribute(xmlTextWriter *writer,
-			  const char *name,
-			  const char *value,
-			  const char *element)
+			 const char *name,
+			 const char *value,
+			 const char *element)
 {
   if (xmlTextWriterWriteAttribute(writer,
                                   BAD_CAST name,
@@ -106,6 +106,41 @@ static int qgs_write_endstop(xmlTextWriter *writer,
   return 0;
 }
 
+static char* join_strings(char **strings, size_t n, char sep)
+{
+  size_t sz = n;
+  for (size_t i = 0 ; i < n ; i++)
+    sz += strlen(strings[i]);
+
+  char *buffer;
+
+  if ((buffer = malloc(sz)) == NULL)
+    return NULL;
+
+  char *p = buffer;
+  size_t k;
+
+  if ((k = snprintf(buffer, sz, "%s", strings[0])) >= sz)
+    {
+      btrace("string truncation");
+      return NULL;
+    }
+
+  for (int i = 1 ; i < n ; i++)
+    {
+      p += k;
+      sz -= k;
+      if ((k = snprintf(p, sz, "%c%s", sep, strings[i])) >= sz)
+	{
+	  btrace("string truncation");
+	  return NULL;
+	}
+    }
+
+  return buffer;
+}
+
+
 static char* mid_stops_string(qgs_t *qgs)
 {
   int n = qgs->n;
@@ -117,31 +152,7 @@ static char* mid_stops_string(qgs_t *qgs)
 	return NULL;
     }
 
-  size_t sz = (n-2) * MID_STOP_LEN + n;
-  char *buffer;
-
-  if ((buffer = malloc(sz)) == NULL)
-    return NULL;
-
-  char *p = buffer;
-  size_t k;
-
-  if ((k = snprintf(buffer, sz, "%s", stops[0])) >= sz)
-    {
-      btrace("stop truncation");
-      return NULL;
-    }
-
-  for (int i = 1 ; i < n-2 ; i++)
-    {
-      p += k;
-      sz -= k;
-      if ((k = snprintf(p, sz, ":%s", stops[i])) >= sz)
-	{
-	  btrace("stop truncation");
-	  return NULL;
-	}
-    }
+  char *buffer = join_strings(stops, n-2, ':');
 
   for (int i = 0 ; i < n-2 ; i++)
     free(stops[i]);
