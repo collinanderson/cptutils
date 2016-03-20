@@ -1,2 +1,2 @@
 #! /bin/sh
-svgx --type pgs "$@"
+svgx --type qgs "$@"

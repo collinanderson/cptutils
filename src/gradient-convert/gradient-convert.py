@@ -30,6 +30,7 @@ gdata = {
     'pg'  : ['PostGIS colour map', [], 'pg', False],
     'png' : ['PNG image', [], 'png', False],
     'psp' : ['PaintShop Pro gradient', ['grd3', 'jgd'], 'PspGradient', False],
+    'qgs' : ['QGIS style colour-ramp', [], 'qgs', False],
     'sao' : ['DS9/SAO colour table', [], 'sao', False],
     'svg' : ['SVG gradient', [], 'svg', True],
     }
@@ -70,6 +71,7 @@ gajmat = {
               'gpf' : 'svggpt',
               'inc' : 'svgpov',
               'sao' : 'svgsao',
+              'qgs' : 'svgqgs',
               'png' : 'svgpng' },
     'ggr' : { 'svg' : 'gimpsvg',
               'lut' : 'gimplut' },
