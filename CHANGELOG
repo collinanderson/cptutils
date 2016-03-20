@@ -1,8 +1,9 @@
 Changes
 
-1.63 (pending)
+1.63 (20 Mar 2016)
   - svg-reader handles rgb percentages
   - added svgqgs which converts svg to QGIS style
+  - package maintainers, the test target now requires xmlstartlet
 
 1.62 (18 Jan 2016)
   - added the cptpg program
