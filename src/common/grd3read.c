@@ -100,7 +100,7 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 
   /* make a copy of the title, if feasible */
 
-  if (n<0) 
+  if (n<0)
     {
       btrace("title length is negative (%i)", n);
       return 1;
@@ -122,7 +122,7 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 
       grad->name = name;
     }
-    
+
   /* then an short, the number of rgb samples */
 
   if (fread(u, 2, 1, s) != 1)
@@ -138,7 +138,7 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
       btrace("too few samples (%i)", n);
       return 1;
     }
-  else 
+  else
     {
       int j, err = 0;
       grd3_rgbseg_t* seg;
@@ -148,10 +148,10 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 	  btrace("failed malloc");
 	  return 1;
 	}
-      
+
       err += read_first_rgbseg(s, seg);
 
-      for (j=1 ; j<n ; j++) 
+      for (j=1 ; j<n ; j++)
 	err += read_rgbseg(s, seg+j);
 
       if (err)
@@ -180,13 +180,13 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 
   n = be16toh(u[0]);
 
-  if (n<2) 
+  if (n<2)
     {
-      btrace("there are %i opacity stop%s (not enough)", 
+      btrace("there are %i opacity stop%s (not enough)",
 	     n, (n==1 ? "" : "s" ));
       return 1;
     }
-  else 
+  else
     {
       int j, err = 0;
       grd3_opseg_t* seg;
@@ -196,8 +196,8 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 	  btrace("failed malloc");
 	  return 1;
 	}
-      
-      for (j=0 ; j<n ; j++) 
+
+      for (j=0 ; j<n ; j++)
 	err += read_opseg(s, seg+j);
 
       if (err)
@@ -222,16 +222,16 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 /*
   rgb segment is (shorts)
 
-  0 0 
-  0 z 
-  0 m 
+  0 0
+  0 z
+  0 m
   0 r g b
 
-  in all but the first, there the [0 z] block is 
+  in all but the first, there the [0 z] block is
   absent and z is implicitly zero
 
   In all files so far tested, the z value for the final
-  segment is 4096 = 2^12 (16, 0) and the redundant 
+  segment is 4096 = 2^12 (16, 0) and the redundant
   midpoint 50.
 */
 
@@ -267,7 +267,7 @@ static int read_rgbseg(FILE *s, grd3_rgbseg_t* seg)
   return err;
 }
 
-/* expect short[2] = 0 0, unused */ 
+/* expect short[2] = 0 0, unused */
 
 static int read_rgbseg_head(FILE *s, grd3_rgbseg_t* seg)
 {
@@ -288,10 +288,10 @@ static int read_rgbseg_head(FILE *s, grd3_rgbseg_t* seg)
   return 0;
 }
 
-/* 
-   expect ushort[2] = 0 m 
+/*
+   expect ushort[2] = 0 m
 
-   m is the midpoint in percentage, though the 
+   m is the midpoint in percentage, though the
    grd3 gui seems to limit it to 5 < m < 95
 */
 
@@ -316,7 +316,7 @@ static int read_rgbseg_midpoint(FILE *s, grd3_rgbseg_t* seg)
   return 0;
 }
 
-/* expect ushort[2] = 0 z  */  
+/* expect ushort[2] = 0 z  */
 
 static int read_rgbseg_z(FILE *s, grd3_rgbseg_t* seg)
 {
@@ -329,20 +329,20 @@ static int read_rgbseg_z(FILE *s, grd3_rgbseg_t* seg)
     }
 
   if (u[0] != 0)
-    {  
+    {
       btrace("unusual z pair found : %d %d", u[0], u[1]);
       return 1;
     }
-  
+
   seg->z = be16toh(u[1]);
 
   return 0;
 }
 
-/* 
+/*
    expect ushort[4] = 0 r g b, the first short is
    unused (it is not an alpha channel), the next
-   3 are the RGB values using the full 16 bits 
+   3 are the RGB values using the full 16 bits
    range. To get the 8 bit value integer divide
    by 256
  */
@@ -370,14 +370,14 @@ static int read_rgbseg_rgb(FILE *s, grd3_rgbseg_t* seg)
   return 0;
 }
 
-/* 
-   expect ushort[5] = 0 z 0 m p  
-   
+/*
+   expect ushort[5] = 0 z 0 m p
+
    where
 
      z is the z-coordinate 0 <= z <= 16*256
      m is the mid-point    0 <= m <= 100
-     p is the opacity      0 <= p <= 256 
+     p is the opacity      0 <= p <= 256
 
    note that the opacity segments do not have a special
    initial form where the z is implicit, the first has
@@ -420,7 +420,7 @@ static int read_block_end(FILE* s)
 
   if (u[0] || u[1])
     {
-      btrace("unepected block end : %d %d", 
+      btrace("unexpected block end : %d %d",
 	     (int)u[0], (int)u[1]);
       return 1;
     }
@@ -464,9 +464,9 @@ int main (int argc, char** argv)
     {
       grd3_rgbseg_t seg = grad.seg[i];
 
-      printf("%.4i %.3i %.3i %.3i\n", 
-	     seg.z, 
-	     seg.r, 
+      printf("%.4i %.3i %.3i %.3i\n",
+	     seg.z,
+	     seg.r,
 	     seg.g,
 	     seg.b);
     }
