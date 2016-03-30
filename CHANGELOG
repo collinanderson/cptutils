@@ -1,5 +1,9 @@
 Changes
 
+1.64 (pending)
+  - improved grd3 parse, better error messages for unsupported
+    features
+
 1.63 (20 Mar 2016)
   - svg-reader handles rgb percentages
   - added svgqgs which converts svg to QGIS style
