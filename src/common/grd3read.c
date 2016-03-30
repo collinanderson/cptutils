@@ -1,13 +1,15 @@
 /*
   grd3read.c
 
-  read paintshop pro gradients.
-  2005 (c) J.J. Green
+  read PaintShop Pro gradients.
+  2005, 2016 (c) J.J. Green
 */
 
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdint.h>
+#include <errno.h>
 
 #if defined HAVE_ENDIAN_H
 #include <endian.h>
@@ -44,16 +46,15 @@ extern int grd3_read(const char* file, grd3_t* grd3)
   return err;
 }
 
-static int read_first_rgbseg(FILE*, grd3_rgbseg_t*);
-static int read_rgbseg(FILE*, grd3_rgbseg_t*);
-static int read_opseg(FILE*, grd3_opseg_t*);
-static int read_block_end(FILE*);
+static int read_colour_stop(FILE*, grd3_rgbseg_t*);
+static int read_opacity_stop(FILE*, grd3_opseg_t*);
+static int read_reserved(FILE*);
 
-static int grd3_read_stream(FILE* s, grd3_t* grad)
+static int grd3_read_stream(FILE *s, grd3_t *grad)
 {
   unsigned char b[6];
-  unsigned short u[2];
-  int n;
+  uint16_t u[2];
+  size_t n;
 
   /* first 4 are the grd3 magic number */
 
@@ -65,10 +66,9 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 
   if (strncmp((const char*)b, "8BGR", 4) != 0)
     {
-      int i;
       char mbuf[5] = {0};
 
-      for (i=0 ; i<4 ; i++)
+      for (size_t i = 0 ; i < 4 ; i++)
 	mbuf[i] = (isalnum(b[i]) ? b[i] : '.');
 
       btrace("expected magic number '8BGR', but found '%s'", mbuf);
@@ -100,15 +100,14 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 
   /* make a copy of the title, if feasible */
 
-  if (n<0)
+  if (n == 0)
     {
-      btrace("title length is negative (%i)", n);
+      btrace("title length is zero");
       return 1;
     }
   else
     {
       unsigned char *name;
-      int j;
 
       if ((name = malloc(n+1)) == NULL)
 	{
@@ -116,7 +115,7 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 	  return 1;
 	}
 
-      for (j=0 ; j<n ; j++)  name[j] = fgetc(s);
+      for (size_t j = 0 ; j < n ; j++)  name[j] = fgetc(s);
 
       name[n] = '\0';
 
@@ -133,14 +132,13 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 
   n = be16toh(u[0]);
 
-  if (n<2)
+  if (n < 2)
     {
       btrace("too few samples (%i)", n);
       return 1;
     }
   else
     {
-      int j, err = 0;
       grd3_rgbseg_t* seg;
 
       if ((seg = malloc(n*sizeof(grd3_rgbseg_t))) == NULL)
@@ -149,25 +147,17 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 	  return 1;
 	}
 
-      err += read_first_rgbseg(s, seg);
-
-      for (j=1 ; j<n ; j++)
-	err += read_rgbseg(s, seg+j);
-
-      if (err)
+      for (size_t j = 0 ; j < n ; j++)
 	{
-	  btrace("error reading rgb segments (%i)", err);
-	  return err;
+	  if (read_colour_stop(s, seg + j) != 0)
+	    {
+	      btrace("error reading colour stop %i", j+1);
+	      return 1;
+	    }
 	}
 
       grad->rgb.n   = n;
       grad->rgb.seg = seg;
-    }
-
-  if (read_block_end(s) != 0)
-    {
-      btrace("error reading endblock");
-      return 1;
     }
 
   /* then a short, the number of opacity samples */
@@ -180,7 +170,7 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 
   n = be16toh(u[0]);
 
-  if (n<2)
+  if (n < 2)
     {
       btrace("there are %i opacity stop%s (not enough)",
 	     n, (n==1 ? "" : "s" ));
@@ -188,7 +178,6 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
     }
   else
     {
-      int j, err = 0;
       grd3_opseg_t* seg;
 
       if ((seg = malloc(n*sizeof(grd3_opseg_t))) == NULL)
@@ -197,20 +186,20 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
 	  return 1;
 	}
 
-      for (j=0 ; j<n ; j++)
-	err += read_opseg(s, seg+j);
-
-      if (err)
+      for (size_t j = 0 ; j < n ; j++)
 	{
-	  btrace("error reading op segments (%i)", err);
-	  return err;
+	  if (read_opacity_stop(s, seg + j) != 0)
+	    {
+	      btrace("error reading opacity stop %i", j+1);
+	      return 1;
+	    }
 	}
 
-      grad->op.n   = n;
+      grad->op.n = n;
       grad->op.seg = seg;
     }
 
-  if (read_block_end(s) != 0)
+  if (read_reserved(s) != 0)
     {
       btrace("error reading endblock");
       return 1;
@@ -219,259 +208,257 @@ static int grd3_read_stream(FILE* s, grd3_t* grad)
   return 0;
 }
 
-/*
-  rgb segment is (shorts)
-
-  0 0
-  0 z
-  0 m
-  0 r g b
-
-  in all but the first, there the [0 z] block is
-  absent and z is implicitly zero
-
-  In all files so far tested, the z value for the final
-  segment is 4096 = 2^12 (16, 0) and the redundant
-  midpoint 50.
-*/
-
-static int read_rgbseg_head(FILE*, grd3_rgbseg_t*);
-static int read_rgbseg_midpoint(FILE*, grd3_rgbseg_t*);
-static int read_rgbseg_z(FILE*, grd3_rgbseg_t*);
-static int read_rgbseg_rgb(FILE*, grd3_rgbseg_t*);
-
-static int read_first_rgbseg(FILE *s, grd3_rgbseg_t* seg)
+static int read_colour_stop_offset(FILE *s, grd3_rgbseg_t* seg)
 {
-  int err = 0;
+  uint32_t u;
 
-  err += read_rgbseg_head(s, seg);
-  err += read_rgbseg_midpoint(s, seg);
-  err += read_rgbseg_rgb(s, seg);
+  if (fread(&u, 4, 1, s) != 1)
+    {
+      btrace("failed to read offset");
+      return 1;
+    }
 
-  if (err) return err;
+  u = be32toh(u);
 
-  seg->z = 0;
+  if (u > 4096)
+    {
+      btrace("unexpected offset : %u", u);
+      return 1;
+    }
+
+  seg->z = u;
 
   return 0;
 }
 
-static int read_rgbseg(FILE *s, grd3_rgbseg_t* seg)
+static int read_colour_stop_midpoint(FILE *s, grd3_rgbseg_t* seg)
 {
+  uint32_t u;
+
+  if (fread(&u, 4, 1, s) != 1)
+    {
+      btrace("failed to read midpoint");
+      return 1;
+    }
+
+  u = be32toh(u);
+
+  if (! ((0 < u) && (u < 100)))
+    {
+      btrace("unexpected midpoint : %u", u);
+      return 1;
+    }
+
+  seg->midpoint = u;
+
+  return 0;
+}
+
+static int read_colour_stop_model(FILE *s, grd3_rgbseg_t* seg)
+{
+  uint16_t u;
+
+  if (fread(&u, 2, 1, s) != 1)
+    {
+      btrace("failed to read model");
+      return 1;
+    }
+
+  u = be16toh(u);
+
+  switch (u)
+    {
+    case 0:
+      break;
+    case 1:
+      btrace("unsupported colour model HSV");
+      return 1;
+    case 2:
+      btrace("unsupported colour model CMYK");
+      return 1;
+    case 7:
+      btrace("unsupported colour model Lab");
+      return 1;
+    case 8:
+      btrace("unsupported colour model Grayscale");
+      return 1;
+    default:
+      btrace("unknown colour model : %u", u);
+      return 1;
+    }
+
+  return 0;
+}
+
+static int read_colour_stop_colours(FILE *s, grd3_rgbseg_t* seg)
+{
+  uint16_t u[4];
+
+  if (fread(u, 2, 4, s) != 4)
+    {
+      btrace("failed to read colour values");
+      return 1;
+    }
+
+  if (be16toh(u[3]))
+    {
+      btrace("unexpected rgb padding : %u", be16toh(u[0]));
+      return 1;
+    }
+
+  seg->r = be16toh(u[0]);
+  seg->g = be16toh(u[1]);
+  seg->b = be16toh(u[2]);
+
+  return 0;
+}
+
+static int read_colour_stop_type(FILE *s, grd3_rgbseg_t* seg)
+{
+  uint16_t u;
+
+  if (fread(&u, 2, 1, s) != 1)
+    {
+      btrace("failed to read colour type");
+      return 1;
+    }
+
+  u = be16toh(u);
+
+  switch (u)
+    {
+    case 0:
+      break;
+    case 1:
+      btrace("foreground colour type not supported");
+      return 1;
+    case 2:
+      btrace("background colour type not supported");
+      return 1;
+    default:
+      btrace("unexpected colour type : %i", u);
+      return 1;
+    }
+
+  return 0;
+}
+
+typedef int (*colour_stop_reader_t)(FILE*, grd3_rgbseg_t*);
+
+static int read_colour_stop(FILE *s, grd3_rgbseg_t* seg)
+{
+  colour_stop_reader_t *reader, readers[] = {
+    read_colour_stop_offset,
+    read_colour_stop_midpoint,
+    read_colour_stop_model,
+    read_colour_stop_colours,
+    read_colour_stop_type,
+    NULL
+  };
+
   int err = 0;
 
-  err += read_rgbseg_head(s, seg);
-  err += read_rgbseg_z(s, seg);
-  err += read_rgbseg_midpoint(s, seg);
-  err += read_rgbseg_rgb(s, seg);
+  for (reader = readers ; *reader ; reader++)
+    err += (*reader)(s, seg);
 
   return err;
 }
 
-/* expect short[2] = 0 0, unused */
-
-static int read_rgbseg_head(FILE *s, grd3_rgbseg_t* seg)
+static int read_opacity_stop_offset(FILE *s, grd3_opseg_t* seg)
 {
-  unsigned short u[2];
+  uint32_t u;
 
-  if (fread(u, 2, 2, s) != 2)
+  if (fread(&u, 4, 1, s) != 1)
     {
-      btrace("failed to read RGB segment header");
+      btrace("failed to read offset");
       return 1;
     }
 
-  if (u[0] != 0)
+  u = be32toh(u);
+
+  if (u > 4096)
     {
-      btrace("unusual head found : %d %d", u[0], u[1]);
+      btrace("unexpected offset : %u", u);
+      return 1;
+    }
+
+  seg->z = u;
+
+  return 0;
+}
+
+static int read_opacity_stop_midpoint(FILE *s, grd3_opseg_t* seg)
+{
+  uint32_t u;
+
+  if (fread(&u, 4, 1, s) != 1)
+    {
+      btrace("failed to read offset");
+      return 1;
+    }
+
+  u = be32toh(u);
+
+  if ( ! ((0 < u) && (u < 100)) )
+    {
+      btrace("unexpected midpoint : %u", u);
+      return 1;
+    }
+
+  seg->midpoint = u;
+
+  return 0;
+}
+
+static int read_opacity_stop_opacity(FILE *s, grd3_opseg_t* seg)
+{
+  uint16_t u;
+
+  if (fread(&u, 2, 1, s) != 1)
+    {
+      btrace("failed to read opacity");
+      return 1;
+    }
+
+  u = be16toh(u);
+
+  if (u > 255)
+    {
+      btrace("unexpected midpoint : %u", u);
+      return 1;
+    }
+
+  seg->opacity = u;
+
+  return 0;
+}
+
+typedef int (*opacity_stop_reader_t)(FILE*, grd3_opseg_t*);
+
+static int read_opacity_stop(FILE *s, grd3_opseg_t* seg)
+{
+  opacity_stop_reader_t *reader, readers[] = {
+    read_opacity_stop_offset,
+    read_opacity_stop_midpoint,
+    read_opacity_stop_opacity,
+    NULL
+  };
+
+  int err = 0;
+
+  for (reader = readers ; *reader ; reader++)
+    err += (*reader)(s, seg);
+
+  return err;
+}
+
+static int read_reserved(FILE *s)
+{
+  if (fseek(s, 6L, SEEK_CUR) != 0)
+    {
+      btrace("fseek error : %s", strerror(errno));
       return 1;
     }
 
   return 0;
 }
-
-/*
-   expect ushort[2] = 0 m
-
-   m is the midpoint in percentage, though the
-   grd3 gui seems to limit it to 5 < m < 95
-*/
-
-static int read_rgbseg_midpoint(FILE *s, grd3_rgbseg_t* seg)
-{
-  unsigned short u[2];
-
-  if (fread(u, 2, 2, s) != 2)
-    {
-      btrace("failed to read RGB segment header");
-      return 1;
-    }
-
-  if (u[0] != 0)
-    {
-      btrace("unusual midpoint block found : %d %d", u[0], u[1]);
-      return 1;
-    }
-
-  seg->midpoint = be16toh(u[1]);
-
-  return 0;
-}
-
-/* expect ushort[2] = 0 z  */
-
-static int read_rgbseg_z(FILE *s, grd3_rgbseg_t* seg)
-{
-  unsigned short u[2];
-
-  if (fread(u, 2, 2, s) != 2)
-    {
-      btrace("failed to read RGB segment z-value");
-      return 1;
-    }
-
-  if (u[0] != 0)
-    {
-      btrace("unusual z pair found : %d %d", u[0], u[1]);
-      return 1;
-    }
-
-  seg->z = be16toh(u[1]);
-
-  return 0;
-}
-
-/*
-   expect ushort[4] = 0 r g b, the first short is
-   unused (it is not an alpha channel), the next
-   3 are the RGB values using the full 16 bits
-   range. To get the 8 bit value integer divide
-   by 256
- */
-
-static int read_rgbseg_rgb(FILE *s, grd3_rgbseg_t* seg)
-{
-  unsigned short u[4];
-
-  if (fread(u, 2, 4, s) != 4)
-    {
-      btrace("failed to read RGB values");
-      return 1;
-    }
-
-  if (u[0])
-    {
-      btrace("unexpected rgb padding : %d", (int)u[0]);
-      return 1;
-    }
-
-  seg->r = be16toh(u[1]);
-  seg->g = be16toh(u[2]);
-  seg->b = be16toh(u[3]);
-
-  return 0;
-}
-
-/*
-   expect ushort[5] = 0 z 0 m p
-
-   where
-
-     z is the z-coordinate 0 <= z <= 16*256
-     m is the mid-point    0 <= m <= 100
-     p is the opacity      0 <= p <= 256
-
-   note that the opacity segments do not have a special
-   initial form where the z is implicit, the first has
-   z=0 and the last has z=4096=16*256
-
-   The m in the final segment is unused (and usually 50).
-*/
-
-static int read_opseg(FILE *s, grd3_opseg_t* seg)
-{
-  unsigned short u[5];
-
-  if (fread(u, 2, 5, s) != 5)
-    {
-      btrace("failed to read opacity segment");
-      return 1;
-    }
-
-  if (u[0] || u[2])
-    {
-      btrace("unusual opacity segment: %d %d", u[0], u[1]);
-    }
-
-  seg->z        = be16toh(u[1]);
-  seg->midpoint = be16toh(u[3]);
-  seg->opacity  = be16toh(u[4]);
-
-  return 0;
-}
-
-static int read_block_end(FILE* s)
-{
-  unsigned short u[2];
-
-  if (fread(u, 2, 2, s) != 2)
-    {
-      btrace("failed to read RGB segment header");
-      return 1;
-    }
-
-  if (u[0] || u[1])
-    {
-      btrace("unexpected block end : %d %d",
-	     (int)u[0], (int)u[1]);
-      return 1;
-    }
-
-  return 0;
-}
-
-#ifdef TESTPROG
-
-/* test program */
-
-int main (int argc, char** argv)
-{
-  FILE *s;
-  char *file = argv[1];
-  grd3_t grad;
-  int i;
-
-  if (argc != 2)
-    {
-      btrace("no file specified");
-      return EXIT_FAILURE;
-    }
-
-  if ((s = fopen(file, "r")) == NULL)
-    {
-      btrace("failed to open %s", file);
-      return EXIT_FAILURE;
-    }
-
-  if (read_grd3(s, &grad) != 0)
-    {
-      btrace("failed to read %s", file);
-      return EXIT_FAILURE;
-    }
-
-  fclose(s);
-
-  printf("# %s", grad.name);
-  for (i=0 ; i<grad.n ; i++)
-    {
-      grd3_rgbseg_t seg = grad.seg[i];
-
-      printf("%.4i %.3i %.3i %.3i\n",
-	     seg.z,
-	     seg.r,
-	     seg.g,
-	     seg.b);
-    }
-
-  return EXIT_SUCCESS;
-}
-
-#endif
