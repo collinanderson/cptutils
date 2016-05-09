@@ -50,19 +50,19 @@ extern int cptcont(char* infile,char* outfile,cptcont_opt_t opt)
 		     (infile ? infile : "<stdin>"));
 	  err = 1;
 	}
-      
-      cpt_destroy(cpt);    
-    }	
+
+      cpt_destroy(cpt);
+    }
   else
     {
       btrace("failed to create cpt struct");
       err = 1;
     }
-  
+
   if (err)
     btrace("failed to write cpt to %s",
 	       (outfile ? outfile : "<stdout>"));
-  
+
   return err;
 }
 
@@ -98,8 +98,8 @@ static int cptcont_convert(cpt_t* cpt,cptcont_opt_t opt)
   int n = 0;
   double p = opt.partial/2;
 
-  for (s1 = cpt->segment, s2 = s1->rseg ; 
-       s2 ; 
+  for (s1 = cpt->segment, s2 = s1->rseg ;
+       s2 ;
        s1 = s2, s2 = s1->rseg)
     {
       if (s1->rsmp.fill.type != s2->lsmp.fill.type)
@@ -123,7 +123,7 @@ static int cptcont_convert(cpt_t* cpt,cptcont_opt_t opt)
 				  s1->rsmp.fill,
 				  cpt->model,
 				  &F2);
-	  
+
 	  if (err)
 	    {
 	      btrace("failed fill intepolate");
@@ -139,7 +139,7 @@ static int cptcont_convert(cpt_t* cpt,cptcont_opt_t opt)
 
   if (opt.verbose)
     printf("modified %i discontinuities\n",n);
-  
+
   return 0;
 }
 
@@ -149,24 +149,24 @@ static int cptcont_convert(cpt_t* cpt,cptcont_opt_t opt)
   the right
 */
 
-static int midpoint_split(cpt_seg_t* s,model_t model)
+static int midpoint_split(cpt_seg_t* s, model_t model)
 {
   if (!s) return 0;
 
-  int err; 
+  int err;
 
-  if ((err = midpoint_split(s->rseg,model)) != 0) 
+  if ((err = midpoint_split(s->rseg,model)) != 0)
     return err + 1;
 
-  double zm = (s->lsmp.val + s->rsmp.val)/2.0; 
+  double zm = (s->lsmp.val + s->rsmp.val)/2.0;
 
   /* the new left and right segments */
 
-  cpt_seg_t 
+  cpt_seg_t
     *sl = s,
     *sr = cpt_seg_new();
 
-  if (!sl)
+  if (!sr)
     {
       btrace("failed to create new segment");
       return 1;
