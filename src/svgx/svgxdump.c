@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <math.h>
 
@@ -366,6 +367,11 @@ static int svgpov_valid(const svg_t *svg, int permissive, int verbose)
   return 1;
 }
 
+static bool has_name(const svg_t *svg)
+{
+  return svg->name[0] != '\0';
+}
+
 static int svgpov(const svg_t *svg, pov_t *pov)
 {
   int n, m, nmod;
@@ -439,7 +445,7 @@ static int svgpov(const svg_t *svg, pov_t *pov)
 
   /* povray names need to be alphanumeric ascii */
 
-  if (svg->name)
+  if (has_name(svg))
     {
       char aname[SVG_NAME_LEN];
 
