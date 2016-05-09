@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <cpt.h>
 #include <cptwrite.h>
@@ -267,8 +268,7 @@ static int skipline(const char* line)
       default:
         return 0;
       }
+    s++;
   }
-  while (s++);
-
-  return 0;
+  while (true);
 }

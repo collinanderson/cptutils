@@ -140,7 +140,6 @@ static char* join_strings(char **strings, size_t n, char sep)
   return buffer;
 }
 
-
 static char* mid_stops_string(qgs_t *qgs)
 {
   int n = qgs->n;
