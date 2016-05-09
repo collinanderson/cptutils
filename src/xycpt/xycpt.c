@@ -33,14 +33,14 @@ extern int xycpt(xycpt_opt_t opt)
   fill_stack_t* xy;
 
   xy = xyread(opt.file.input, opt);
-    
+
   if (!xy)
     {
       btrace("failed to read data from %s",
 	      (opt.file.input ?  opt.file.input : "<stdin>"));
       return 1;
     }
-    
+
   /* create a cpt struct */
 
   if ((cpt = cpt_new()) == NULL)
@@ -52,7 +52,7 @@ extern int xycpt(xycpt_opt_t opt)
   cpt->model = model_rgb;
 
   /* set bg/fg/nan values */
-  
+
   cpt->fg.type = cpt->bg.type = cpt->nan.type = fill_colour;
 
   cpt->bg.u.colour.rgb  = opt.bg;
@@ -69,26 +69,26 @@ extern int xycpt(xycpt_opt_t opt)
       btrace("failed to convert data");
       return 1;
     }
-  
-  if (opt.verbose) 
+
+  if (opt.verbose)
     {
       int n = cpt_nseg(cpt);
       printf("converted to %i segment rgb-spline\n", n);
     }
-  
+
   /* write the cpt file */
-  
+
   if (cpt_write(opt.file.output, cpt) != 0)
     {
       btrace("failed to write palette to %s",
 	      (opt.file.output ? opt.file.output : "<stdout>"));
       return 1;
     }
-  
+
   /* tidy */
-  
+
   cpt_destroy(cpt);
-  
+
   return 0;
 }
 
@@ -103,7 +103,7 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 
   /* dump the linked list into an array */
 
-  for (f=fstack, n=0 ; f ; f=f->next, n++); 
+  for (f=fstack, n=0 ; f ; f=f->next, n++);
 
   if (n<2)
     {
@@ -127,10 +127,10 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	  for (i=0 ; i<n-1 ; i++)
 	    {
 	      if ((seg = cpt_seg_new_err()) == NULL) return 1;
-	      
+
 	      seg->lsmp.val  = F[i].val;
 	      seg->lsmp.fill = F[i+1].fill;
-	      
+
 	      seg->rsmp.val  = F[i+1].val;
 	      seg->rsmp.fill = F[i+1].fill;
 
@@ -164,10 +164,10 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	    }
 
 	  if ((seg = cpt_seg_new_err()) == NULL) return 1;
-	  
+
 	  seg->lsmp.val  = (F[n-2].val+F[n-1].val)/2.0;
 	  seg->lsmp.fill = F[n-1].fill;
-	  
+
 	  seg->rsmp.val  = F[n-1].val;
 	  seg->rsmp.fill = F[n-1].fill;
 
@@ -180,10 +180,10 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	  for (i=0 ; i<n-1 ; i++)
 	    {
 	      if ((seg = cpt_seg_new_err()) == NULL) return 1;
-  	      
+
 	      seg->lsmp.val  = F[i].val;
 	      seg->lsmp.fill = F[i].fill;
-	      
+
 	      seg->rsmp.val  = F[i+1].val;
 	      seg->rsmp.fill = F[i].fill;
 
@@ -198,10 +198,10 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
       for (i=0 ; i<n-1 ; i++)
 	{
 	  if ((seg = cpt_seg_new_err()) == NULL) return 1;
-	  
+
 	  seg->lsmp.val  = F[i].val;
 	  seg->lsmp.fill = F[i].fill;
-	  
+
 	  seg->rsmp.val  = F[i+1].val;
 	  seg->rsmp.fill = F[i+1].fill;
 
@@ -220,7 +220,7 @@ static cpt_seg_t* cpt_seg_new_err(void)
 {
   cpt_seg_t* seg;
 
-  if ((seg = cpt_seg_new()) == NULL) 
+  if ((seg = cpt_seg_new()) == NULL)
     {
       btrace("error creating segment");
       return NULL;
@@ -244,7 +244,7 @@ static int cpt_append_err(cpt_seg_t* seg, cpt_t* cpt)
 
 /*
   handle stream choice
-*/ 
+*/
 
 static fill_stack_t* xyread_stream(FILE*, xycpt_opt_t);
 
@@ -271,8 +271,8 @@ static fill_stack_t* xyread(char* file, xycpt_opt_t opt)
   return xy;
 }
 
-/* 
-   read the column data 
+/*
+   read the column data
 
    we read the first data line and work out how many
    columns there are, then call a specific function
@@ -315,13 +315,13 @@ static fill_stack_t* xyread_stream(FILE* stream, xycpt_opt_t opt)
   /* read first non-comment line */
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       {
 	btrace("no first data line");
 	return NULL;
       }
   while (skipline(buf));
-  
+
   /* tokenise */
 
   if ((tok[0] = strtok(buf, " \t\n")) == NULL)
@@ -335,7 +335,7 @@ static fill_stack_t* xyread_stream(FILE* stream, xycpt_opt_t opt)
       if ((tok[i] = strtok(NULL, " \t")) == NULL)
 	break;
     }
- 
+
   if ((f = malloc(sizeof(fill_stack_t))) == NULL)
     return NULL;
 
@@ -347,8 +347,8 @@ static fill_stack_t* xyread_stream(FILE* stream, xycpt_opt_t opt)
 
       f->fill.u.grey = atocol(tok[0]);
 
-      f->next = (opt.unital ? 
-		 xyread1f(stream, buf, 1) : 
+      f->next = (opt.unital ?
+		 xyread1f(stream, buf, 1) :
 		 xyread1i(stream, buf, 1));
       break;
 
@@ -358,7 +358,7 @@ static fill_stack_t* xyread_stream(FILE* stream, xycpt_opt_t opt)
 
       f->fill.u.grey = atocol(tok[1]);
 
-      f->next = (opt.unital ? 
+      f->next = (opt.unital ?
 		 xyread2f(stream, buf) :
 		 xyread2i(stream, buf));
       break;
@@ -371,11 +371,11 @@ static fill_stack_t* xyread_stream(FILE* stream, xycpt_opt_t opt)
       f->fill.u.colour.rgb.green = atocol(tok[1]);
       f->fill.u.colour.rgb.blue  = atocol(tok[2]);
 
-      f->next = (opt.unital ? 
+      f->next = (opt.unital ?
 		 xyread3f(stream, buf, 1) :
 		 xyread3i(stream, buf, 1));
       break;
- 
+
     case 4:
       f->fill.type = fill_colour;
       f->val       = atof(tok[0]);
@@ -384,7 +384,7 @@ static fill_stack_t* xyread_stream(FILE* stream, xycpt_opt_t opt)
       f->fill.u.colour.rgb.green = atocol(tok[2]);
       f->fill.u.colour.rgb.blue  = atocol(tok[3]);
 
-      f->next = (opt.unital ? 
+      f->next = (opt.unital ?
 		 xyread4f(stream, buf) :
 		 xyread4i(stream, buf));
 
@@ -405,10 +405,10 @@ static fill_stack_t* xyread1i(FILE* stream, char* buf, int n)
   int i;
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       return NULL;
   while (skipline(buf));
-  
+
   if (sscanf(buf, "%d", &i) != 1)
     {
       btrace("bad line: %s", buf);
@@ -432,10 +432,10 @@ static fill_stack_t* xyread1f(FILE* stream, char* buf, int n)
   double d;
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       return NULL;
   while (skipline(buf));
-  
+
   if (sscanf(buf, "%lf", &d) != 1)
     {
       btrace("bad line: %s", buf);
@@ -460,10 +460,10 @@ static fill_stack_t* xyread2i(FILE* stream, char* buf)
   double v;
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       return NULL;
   while (skipline(buf));
-  
+
   if (sscanf(buf, "%lf %d", &v, &i) != 2)
     {
       btrace("bad line: %s", buf);
@@ -487,10 +487,10 @@ static fill_stack_t* xyread2f(FILE* stream, char* buf)
   double v, d;
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       return NULL;
   while (skipline(buf));
-  
+
   if (sscanf(buf, "%lf %lf", &v, &d) != 2)
     {
       btrace("bad line: %s", buf);
@@ -514,10 +514,10 @@ static fill_stack_t* xyread3i(FILE* stream, char* buf, int n)
   int r, g, b;
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       return NULL;
   while (skipline(buf));
-  
+
   if (sscanf(buf, "%d %d %d", &r, &g, &b) != 3)
     {
       btrace("bad line: %s", buf);
@@ -545,10 +545,10 @@ static fill_stack_t* xyread3f(FILE* stream, char* buf, int n)
   double r, g, b;
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       return NULL;
   while (skipline(buf));
-  
+
   if (sscanf(buf, "%lf %lf %lf", &r, &g, &b) != 3)
     {
       btrace("bad line: %s", buf);
@@ -577,10 +577,10 @@ static fill_stack_t* xyread4i(FILE* stream, char* buf)
   double z;
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       return NULL;
   while (skipline(buf));
-  
+
   if (sscanf(buf, "%lf %d %d %d", &z, &r, &g, &b) != 4)
     {
       btrace("bad line: %s", buf);
@@ -609,10 +609,10 @@ static fill_stack_t* xyread4f(FILE* stream, char* buf)
   double z;
 
   do
-    if (fgets(buf, BUFSIZE, stream) == NULL) 
+    if (fgets(buf, BUFSIZE, stream) == NULL)
       return NULL;
   while (skipline(buf));
-  
+
   if (sscanf(buf, "%lf %lf %lf %lf", &z, &r, &g, &b) != 4)
     {
       btrace("bad line:  %s", buf);
@@ -639,8 +639,8 @@ static int skipline(const char* line)
   const char *s;
 
   if (line == NULL) return 1;
-  
-  s = line; 
+
+  s = line;
 
   do {
     switch (*s)
@@ -655,10 +655,9 @@ static int skipline(const char* line)
       default:
 	return 0;
       }
+    s++;
   }
-  while (s++);
-
-  return 0;
+  while (true);
 }
 
 #define MAX(a, b) (((a)>(b)) ? (a) : (b))
