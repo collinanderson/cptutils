@@ -29,3 +29,16 @@ script :
   - make --quiet test
 after_success:
   - coveralls --exclude src/unit --gcov-options '\-lp'
+
+env:
+  global:
+   - secure: "Q0DE5mVEpInjLSja4vS2B4sX/blXTu3/RgzFORpE787QHAtua73eqobfa6+gl1aF/c3I5UCTRfQVJ9UYOX/RbYirV7ajhjHQ+lK8u0gcEARZRa4mHPamg8+OJ0tRRgsJcKLfemJJxmc9yefdr6PUTHeh73gzT27OOMUw73udzW4="
+addons:
+  coverity_scan:
+    project:
+      name: "jjgreen/cptutils"
+      description: "Build submitted via Travis CI"
+    notification_email: "j.j.green@gmx.co.uk"
+    build_command_prepend: "autoconf ; ./configure ; make clean"
+    build_command:   "make"
+    branch_pattern: "coverity_scan"
