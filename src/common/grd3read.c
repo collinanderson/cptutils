@@ -94,18 +94,21 @@ static int grd3_read_stream(FILE *s, grd3_t *grad)
       return 1;
     }
 
-  /* then a single unsigned char, the title length */
+  /*
+    then a single unsigned char, the title length (fgetc
+    casts this to int, it may be EOF < 0)
+  */
 
-  n = fgetc(s);
+  int len = fgetc(s);
 
   /* make a copy of the title, if feasible */
 
-  if (n < 0)
+  if (len < 0)
     {
       btrace("premature truncation");
       return 1;
     }
-  else if (n == 0)
+  else if (len == 0)
     {
       btrace("title length is zero");
       return 1;
@@ -114,15 +117,16 @@ static int grd3_read_stream(FILE *s, grd3_t *grad)
     {
       unsigned char *name;
 
-      if ((name = malloc(n+1)) == NULL)
+      if ((name = malloc(len+1)) == NULL)
 	{
 	  btrace("failed malloc");
 	  return 1;
 	}
 
-      for (size_t j = 0 ; j < n ; j++)  name[j] = fgetc(s);
+      for (size_t j = 0 ; j < len ; j++)
+	name[j] = fgetc(s);
 
-      name[n] = '\0';
+      name[len] = '\0';
 
       grad->name = name;
     }
