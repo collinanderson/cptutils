@@ -100,7 +100,12 @@ static int grd3_read_stream(FILE *s, grd3_t *grad)
 
   /* make a copy of the title, if feasible */
 
-  if (n == 0)
+  if (n < 0)
+    {
+      btrace("premature truncation");
+      return 1;
+    }
+  else if (n == 0)
     {
       btrace("title length is zero");
       return 1;
