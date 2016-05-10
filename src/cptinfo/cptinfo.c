@@ -17,7 +17,7 @@
 
 #include "cptinfo.h"
 
-typedef struct 
+typedef struct
 {
   int     size;
   model_t model;
@@ -35,7 +35,7 @@ typedef struct
   } type;
   struct
   {
-    double min,max;
+    double min, max;
   } z;
 } info_t;
 
@@ -55,25 +55,36 @@ extern int cptinfo(cptinfo_opt_t opt)
 
   if ((cpt = cpt_new()) == NULL)
     {
-      fprintf(stderr,"failed to initialise cpt structure\n");
+      fprintf(stderr, "failed to initialise cpt structure\n");
       return 1;
+    }
+  else
+    {
+      int err = 0;
+
+      if (cpt_read(opt.file.input, cpt) != 0)
+	{
+	  fprintf(stderr, "failed to read %s\n", NNSTR(opt.file.input));
+	  err++;
+	}
+      else
+	{
+	  if (cptinfo_analyse(cpt, &info) != 0)
+	    {
+	      fprintf(stderr, "failed to analyse %s\n", NNSTR(opt.file.input));
+	      err++;
+	    }
+	}
+
+      cpt_destroy(cpt);
+
+      if (err) return 1;
     }
 
-  if (cpt_read(opt.file.input, cpt) != 0)
-    {
-      fprintf(stderr,"failed to read %s\n",NNSTR(opt.file.input));
-      return 1;
-    }
-
-  if (cptinfo_analyse(cpt,&info) != 0)
-    {
-      fprintf(stderr,"failed to analyse %s\n",NNSTR(opt.file.input));
-      return 1;
-    }
 
   if (opt.file.input)
     {
-      if (stat(opt.file.input,&sbuf) == 0)
+      if (stat(opt.file.input, &sbuf) == 0)
 	info.size = sbuf.st_size;
       else
 	{
@@ -84,13 +95,12 @@ extern int cptinfo(cptinfo_opt_t opt)
 	  return 1;
 	}
     }
-  else info.size = 0;
-
-  cpt_destroy(cpt);
+  else
+    info.size = 0;
 
   if (opt.file.output)
     {
-      if ((stream = fopen(opt.file.output,"w")) == NULL)
+      if ((stream = fopen(opt.file.output, "w")) == NULL)
 	{
 	  fprintf(stderr,
 		  "failed to open %s : %s",
@@ -105,23 +115,23 @@ extern int cptinfo(cptinfo_opt_t opt)
   switch (opt.format)
     {
     case plain:
-      if (output_plain(info,stream) != 0)
+      if (output_plain(info, stream) != 0)
 	{
-	  fprintf(stderr,"error in plain output\n");
+	  fprintf(stderr, "error in plain output\n");
 	  return 1;
 	}
       break;
 
     case csv:
-      if (output_csv(info,stream) != 0)
+      if (output_csv(info, stream) != 0)
 	{
-	  fprintf(stderr,"error in csv output\n");
+	  fprintf(stderr, "error in csv output\n");
 	  return 1;
 	}
       break;
 
    default:
-      fprintf(stderr,"strange output specified\n");
+      fprintf(stderr, "strange output specified\n");
       return 1;
     }
 
@@ -163,7 +173,7 @@ static int cptinfo_analyse(cpt_t* cpt, info_t* info)
     {
       if (analyse_segment(s, info) != 0)
 	{
-	  fprintf(stderr,"failed to analyse segment\n");
+	  fprintf(stderr, "failed to analyse segment\n");
 	  return 1;
 	}
 
@@ -177,7 +187,7 @@ static int analyse_segment(cpt_seg_t* seg, info_t* info)
 {
   cpt_seg_t *right;
 
-  info->segments.total++;  
+  info->segments.total++;
 
   switch (seg->lsmp.fill.type)
     {
@@ -211,7 +221,7 @@ static int analyse_segment(cpt_seg_t* seg, info_t* info)
 
   switch (fill_eq(seg->rsmp.fill, seg->lsmp.fill, info->model))
     {
-    case 0 :       
+    case 0 :
       info->type.discrete = 0;
       break;
     case 1 : break;
@@ -219,7 +229,7 @@ static int analyse_segment(cpt_seg_t* seg, info_t* info)
       return 1;
     }
 
-  double zmin,zmax;
+  double zmin, zmax;
 
   if ( seg->lsmp.val < seg->rsmp.val )
     {
@@ -240,7 +250,7 @@ static int analyse_segment(cpt_seg_t* seg, info_t* info)
 
 #define BOOLSTR(x) ((x) ? "yes" : "no")
 
-static int output_plain(info_t info,FILE* stream)
+static int output_plain(info_t info, FILE* stream)
 {
   const char *modstr;
 
@@ -254,25 +264,25 @@ static int output_plain(info_t info,FILE* stream)
       modstr = "HSV";
       break;
     default:
-      fprintf(stderr,"strange model\n");
+      fprintf(stderr, "strange model\n");
       return 1;
     }
-	
-  fprintf(stream,"model:      %s\n",modstr);
-  fprintf(stream,"continuous: %s\n",BOOLSTR(info.type.continuous));
-  fprintf(stream,"discrete:   %s\n",BOOLSTR(info.type.discrete));
-  fprintf(stream,"segments:\n");
-  fprintf(stream,"  hatchure  %i\n",info.segments.hatch);
-  fprintf(stream,"  greyscale %i\n",info.segments.grey);
-  fprintf(stream,"  colour    %i\n",info.segments.colour);
-  fprintf(stream,"  total     %i\n",info.segments.total);
-  fprintf(stream,"z-range:    %.3f - %.3f\n",info.z.min,info.z.max);
-  fprintf(stream,"file size:  %i\n",info.size);
+
+  fprintf(stream, "model:      %s\n", modstr);
+  fprintf(stream, "continuous: %s\n", BOOLSTR(info.type.continuous));
+  fprintf(stream, "discrete:   %s\n", BOOLSTR(info.type.discrete));
+  fprintf(stream, "segments:\n");
+  fprintf(stream, "  hatchure  %i\n", info.segments.hatch);
+  fprintf(stream, "  greyscale %i\n", info.segments.grey);
+  fprintf(stream, "  colour    %i\n", info.segments.colour);
+  fprintf(stream, "  total     %i\n", info.segments.total);
+  fprintf(stream, "z-range:    %.3f - %.3f\n", info.z.min, info.z.max);
+  fprintf(stream, "file size:  %i\n", info.size);
 
   return 0;
 }
 
-static int output_csv(info_t info,FILE* stream)
+static int output_csv(info_t info, FILE* stream)
 {
   const char *modstr;
 
@@ -286,11 +296,11 @@ static int output_csv(info_t info,FILE* stream)
       modstr = "hsv";
       break;
     default:
-      fprintf(stderr,"strange model\n");
+      fprintf(stderr, "strange model\n");
       return 1;
     }
-	
-  fprintf(stream,"%s,%s,%s,%i,%i,%i,%i,%.3f,%.3f,%i\n",
+
+  fprintf(stream, "%s,%s,%s,%i,%i,%i,%i,%.3f,%.3f,%i\n",
 	  modstr,
 	  BOOLSTR(info.type.continuous),
 	  BOOLSTR(info.type.discrete),
