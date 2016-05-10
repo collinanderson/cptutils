@@ -15,7 +15,7 @@
 #include "utf8x.h"
 
 extern int utf8_to_x(const char *type,
-		     const unsigned char *in, 
+		     const unsigned char *in,
 		     char *out,
 		     size_t lenout)
 {
@@ -36,30 +36,32 @@ extern int utf8_to_x(const char *type,
       return 1;
     }
 
+  int err = 0;
   iconv_t cv = iconv_open(icname, "UTF-8");
-  
+
   if (cv == (iconv_t)(-1))
     {
       btrace("error opening iconv descriptor: %s", strerror(errno));
-      return 1;
+      err++;
     }
-
-  size_t lenin = strlen((const char*)in) + 1;
-
-  if (iconv(cv, 
-	    (char**)&(in), &(lenin), 
-	    (char**)&(out), &(lenout)) == (size_t)-1)
+  else
     {
-      btrace("error in iconv: %s", strerror(errno));
-      return 1;
+      size_t lenin = strlen((const char*)in) + 1;
+
+      if (iconv(cv,
+		(char**)&(in), &(lenin),
+		(char**)&(out), &(lenout)) == (size_t)-1)
+	{
+	  btrace("error in iconv: %s", strerror(errno));
+	  err++;
+	}
+
+      if (iconv_close(cv) == -1)
+	{
+	  btrace("error closing iconv descriptor: %s", strerror(errno));
+	  err++;
+	}
     }
 
-  if (iconv_close(cv) == -1)
-    {
-      btrace("error closing iconv descriptor: %s", strerror(errno));
-      return 1;
-    }
-
-  return 0;
+  return err;
 }
-
