@@ -38,6 +38,6 @@ addons:
       name: "jjgreen/cptutils"
       description: "Build submitted via Travis CI"
     notification_email: "j.j.green@gmx.co.uk"
-    build_command_prepend: "autoconf ; ./configure"
+    build_command_prepend: "autoconf ; ./configure ; make clean"
     build_command:   "make"
     branch_pattern: "coverity_scan"
