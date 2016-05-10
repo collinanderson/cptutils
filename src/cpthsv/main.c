@@ -1,5 +1,5 @@
 /*
-  main.c 
+  main.c
 
   part of the cptutils package
 
@@ -17,7 +17,7 @@
 
   You should have received a copy of the GNU General Public
   License along with this program; if not, write to the
-  Free Software Foundation, Inc.,  51 Franklin Street, Fifth Floor, 
+  Free Software Foundation, Inc.,  51 Franklin Street, Fifth Floor,
   Boston, MA 02110-1301 USA
 */
 
@@ -39,7 +39,7 @@ static int parse_transforms(const char*,cpthsv_opt_t*);
 int main(int argc,char** argv)
 {
   struct gengetopt_args_info info;
-  char    *infile = NULL, *outfile=NULL;
+  char *infile = NULL, *outfile=NULL;
   cpthsv_opt_t opt = {0};
 
   /* use gengetopt */
@@ -50,7 +50,7 @@ int main(int argc,char** argv)
       return EXIT_FAILURE;
     }
 
-  /* check arguments & transfer to opt structure */ 
+  /* check arguments & transfer to opt structure */
 
   opt.verbose = info.verbose_given;
 
@@ -80,10 +80,10 @@ int main(int argc,char** argv)
       fprintf(stderr,"Sorry, only one file at a time\n");
       return EXIT_FAILURE;
     }
-  
+
   if (opt.verbose)
     printf("This is cpthsv (version %s)\n",VERSION);
-  
+
   if (! info.transform_given )
     {
       fprintf(stderr,"no transform specified, nothing to do\n");
@@ -114,11 +114,11 @@ int main(int argc,char** argv)
 	      format = btrace_format(info.backtrace_format_arg);
 	      if (format == BTRACE_ERROR)
 		{
-		  fprintf(stderr, "no such backtrace format %s\n", 
+		  fprintf(stderr, "no such backtrace format %s\n",
 			  info.backtrace_format_arg);
 		  return EXIT_FAILURE;
 		}
-	    }	  
+	    }
 	  btrace_print(info.backtrace_file_arg, format);
 	}
     }
@@ -132,50 +132,53 @@ int main(int argc,char** argv)
     printf("done.\n");
 
   options_free(&info);
-  
+
   return (err ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-static int parse_transform(char*,hsvtrans_t*,cpthsv_opt_t*);    	
+static int parse_transform(char*, hsvtrans_t*, cpthsv_opt_t*);
 
-static int parse_transforms(const char* T,cpthsv_opt_t* opt)
+static int parse_transforms(const char* T, cpthsv_opt_t* opt)
 {
   int n = 1;
   char *v;
   const char *c;
 
-  for (c=T ; *c ; c++) n += (*c == ',');
+  for (c = T ; *c ; c++) n += (*c == ',');
 
   int i;
   char *Tdup = strdup(T);
   hsvtrans_t *t = malloc(n*sizeof(hsvtrans_t));
 
-  v = strtok(Tdup,",");  
-  if (parse_transform(v,t,opt) != 0)
-    {
-      fprintf(stderr,"failed parse of %s\n",v);
-      return 1;
-    }
+  v = strtok(Tdup, ",");
+  if (parse_transform(v, t, opt) != 0) goto failed;
 
   for (i=1 ; i<n ; i++)
     {
-      v = strtok(NULL,",");  
-      if (parse_transform(v,t+i,opt) != 0)
-	{
-	  fprintf(stderr,"failed parse of %s\n",v);
-	  return 1;
-	}
+      v = strtok(NULL, ",");
+      if (parse_transform(v, t+i, opt) != 0) goto failed;
     }
+
+  free(Tdup);
 
   if (opt->verbose)
     printf("read %i transforms\n",n);
 
-  opt->n    = n;
+  opt->n = n;
   opt->tran = t;
 
   return 0;
-}    	
-    	
+
+ failed:
+
+  fprintf(stderr,"failed parse of %s\n", v);
+
+  free(Tdup);
+  free(t);
+
+  return 1;
+}
+
 static int parse_transform(char* T,hsvtrans_t* t,cpthsv_opt_t* opt)
 {
   char cc,co;
@@ -183,7 +186,7 @@ static int parse_transform(char* T,hsvtrans_t* t,cpthsv_opt_t* opt)
 
   switch (sscanf(T,"%c%lf%c",&cc,&z,&co))
     {
-    case 0: 
+    case 0:
     case 1:
       return 1;
     case 2:
@@ -221,11 +224,3 @@ static int parse_transform(char* T,hsvtrans_t* t,cpthsv_opt_t* opt)
 
   return 0;
 }
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-
