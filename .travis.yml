@@ -25,8 +25,7 @@ install:
   - make
   - sudo make install
 script :
-  - make --quiet unit
-  - make --quiet test
+  - if [ ${COVERITY_SCAN_BRANCH} != 1 ] ; then make --quiet test unit ; fi
 after_success:
   - coveralls --exclude src/unit --gcov-options '\-lp'
 
@@ -39,6 +38,6 @@ addons:
       name: "jjgreen/cptutils"
       description: "Build submitted via Travis CI"
     notification_email: "j.j.green@gmx.co.uk"
-    build_command_prepend: "autoconf ; ./configure --enable-tests ; make clean"
+    build_command_prepend: "autoconf ; ./configure"
     build_command:   "make"
     branch_pattern: "coverity_scan"
