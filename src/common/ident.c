@@ -26,6 +26,8 @@ extern ident_t* ident_new(char *name, int id)
 
 	  return ident;
 	}
+
+      free(ident);
     }
 
   return NULL;
