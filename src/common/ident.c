@@ -11,26 +11,28 @@
 
 #include "ident.h"
 
-extern ident_t* ident_new(char* name,int id)
+extern ident_t* ident_new(char *name, int id)
 {
-  char* dup;
-  ident_t* ident;
+  ident_t *ident;
 
-  if ((ident = malloc(sizeof(ident_t))) == NULL)
-    return NULL;
+  if ((ident = malloc(sizeof(ident_t))) != NULL)
+    {
+      char *dup;
 
-  if ((dup = strdup(name)) == NULL)
-    return NULL;
+      if ((dup = strdup(name)) != NULL)
+	{
+	  ident->name = dup;
+	  ident->id   = id;
 
-  ident->name = dup;
-  ident->id   = id;
+	  return ident;
+	}
+    }
 
-  return ident;
+  return NULL;
 }
 
-extern void ident_destroy(ident_t* ident)
+extern void ident_destroy(ident_t *ident)
 {
   free(ident->name);
   free(ident);
 }
-  
