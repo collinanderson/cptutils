@@ -20,12 +20,62 @@
 static int avlcpt_convert(avl_grad_t*, cpt_t*, avlcpt_opt_t);
 static int avl_readfile(char*, avl_grad_t*, avlcpt_opt_t);
 
+static int avlcpt_avl(avlcpt_opt_t opt, cpt_t *cpt, avl_grad_t *avl)
+{
+  if (opt.file.input)
+    cpt->name = cptname(opt.file.input, "avl");
+
+  if (avlcpt_convert(avl, cpt, opt) != 0)
+    {
+      btrace("failed to convert data");
+      return 1;
+    }
+
+  return 0;
+}
+
+static int avlcpt_cpt(avlcpt_opt_t opt, cpt_t *cpt)
+{
+  cpt->model = model_rgb;
+  cpt->fg.type = cpt->bg.type = cpt->nan.type = fill_colour;
+  cpt->bg.u.colour.rgb = opt.bg;
+  cpt->fg.u.colour.rgb = opt.fg;
+  cpt->nan.u.colour.rgb = opt.nan;
+
+  avl_grad_t avl;
+
+  if (avl_readfile(opt.file.input, &avl, opt) != 0)
+    {
+      btrace("failed to read data from %s",
+	     (opt.file.input ?  opt.file.input : "<stdin>"));
+      return 1;
+    }
+
+  int err = avlcpt_avl(opt, cpt, &avl);
+
+  avl_clean(&avl);
+
+  if (err) return 1;
+
+  if (opt.verbose)
+    {
+      int n = cpt_nseg(cpt);
+      printf("converted to %i segment rgb-spline\n", n);
+    }
+
+  if (cpt_write(opt.file.output, cpt) != 0)
+    {
+      btrace("failed to write palette to %s",
+	     (opt.file.output ? opt.file.output : "<stdout>"));
+      return 1;
+    }
+
+  return 0;
+}
+
 extern int avlcpt(avlcpt_opt_t opt)
 {
   cpt_t* cpt;
-  avl_grad_t avl;
-    
-  /* create a cpt struct */
 
   if ((cpt = cpt_new()) == NULL)
     {
@@ -33,56 +83,11 @@ extern int avlcpt(avlcpt_opt_t opt)
       return 1;
     }
 
-  /* housekeeping */
+  int err = avlcpt_cpt(opt, cpt);
 
-  cpt->model = model_rgb;
-  
-  cpt->fg.type = cpt->bg.type = cpt->nan.type = fill_colour;
-
-  cpt->bg.u.colour.rgb  = opt.bg;
-  cpt->fg.u.colour.rgb  = opt.fg;
-  cpt->nan.u.colour.rgb = opt.nan;
-
-  /* transfer the gradient data to the cpt_t struct */
-
-  if (avl_readfile(opt.file.input, &avl, opt) != 0)
-    {
-      btrace("failed to read data from %s", 
-	     (opt.file.input ?  opt.file.input : "<stdin>"));
-      return 1;
-    }
-
-  if (opt.file.input)
-    cpt->name = cptname(opt.file.input, "avl");
-
-  if (avlcpt_convert(&avl, cpt, opt) != 0)
-    {
-      btrace("failed to convert data");
-      return 1;
-    }
-
-  avl_clean(&avl);
-
-  if (opt.verbose) 
-    {
-      int n = cpt_nseg(cpt);
-      printf("converted to %i segment rgb-spline\n", n);
-    }
-  
-  /* write the cpt file */
-  
-  if (cpt_write(opt.file.output, cpt) != 0)
-    {
-      btrace("failed to write palette to %s", 
-	     (opt.file.output ? opt.file.output : "<stdout>"));
-      return 1;
-    }
-  
-  /* tidy */
-  
   cpt_destroy(cpt);
-  
-  return 0;
+
+  return err;
 }
 
 #define AVLCPT_INC   1
@@ -105,9 +110,9 @@ static int avlcpt_convert(avl_grad_t* avl, cpt_t *cpt, avlcpt_opt_t opt)
     }
 
   if (opt.verbose)
-    printf("gradient is %s\n", 
+    printf("gradient is %s\n",
 	   (dir == AVLCPT_INC ? "increasing" : "decreasing"));
- 
+
   prec = opt.precision;
 
   n = avl->n;
@@ -144,20 +149,20 @@ static int avlcpt_convert(avl_grad_t* avl, cpt_t *cpt, avlcpt_opt_t opt)
       cseg->lsmp.fill.u.colour.rgb.red   = aseg.r/256;
       cseg->lsmp.fill.u.colour.rgb.green = aseg.g/256;
       cseg->lsmp.fill.u.colour.rgb.blue  = aseg.b/256;
-      
+
       cseg->rsmp.val = z1;
       cseg->rsmp.fill.type = fill_colour;
       cseg->rsmp.fill.u.colour.rgb.red   = aseg.r/256;
       cseg->rsmp.fill.u.colour.rgb.green = aseg.g/256;
       cseg->rsmp.fill.u.colour.rgb.blue  = aseg.b/256;
-      
+
       if (cpt_append_err(cseg, cpt) != 0) return 1;
     }
 
   return 0;
 }
 
-/* 
+/*
    is the avlcpt gradient increasing or non-increasing?
    we also check that the gradients is monotone, else return
    error.
@@ -191,7 +196,7 @@ static int avlcpt_direction(avl_grad_t* avl)
       double min[m], max[m];
 
       for (i=0, m=0 ; i<n ; i++)
-	{	
+	{
 	  if (! segs[i].nodata)
 	    {
 	      min[m] = segs[i].min;
@@ -200,16 +205,16 @@ static int avlcpt_direction(avl_grad_t* avl)
 	    }
 	}
 
-      /* now monotonicity checking is easy */ 
+      /* now monotonicity checking is easy */
 
-      if (min[0] < min[1]) 
+      if (min[0] < min[1])
 	{
 	  for (i=1 ; i<m-1 ; i++)
 	    {
 	      if (! (min[i] < min[i+1]))
 		{
 		  btrace("increasing gradient started to decrease!");
-		  btrace("(%.4f, %.4f) -> (%.4f, %.4f)", 
+		  btrace("(%.4f, %.4f) -> (%.4f, %.4f)",
 			 min[i], max[i], min[i+1], max[i+1]);
 		  return AVLCPT_ERROR;
 		}
@@ -223,7 +228,7 @@ static int avlcpt_direction(avl_grad_t* avl)
 	      if (min[i] < min[i+1])
 		{
 		  btrace("decreasing gradient started to increase!");
-		  btrace("(%.4f, %.4f) -> (%.4f, %.4f)", 
+		  btrace("(%.4f, %.4f) -> (%.4f, %.4f)",
 			 min[i], max[i], min[i+1], max[i+1]);
 		  return AVLCPT_ERROR;
 		}
@@ -241,7 +246,7 @@ static cpt_seg_t* cpt_seg_new_err(void)
 {
   cpt_seg_t* seg;
 
-  if ((seg = cpt_seg_new()) == NULL) 
+  if ((seg = cpt_seg_new()) == NULL)
     {
       btrace("error creating segment");
       return NULL;
@@ -265,7 +270,7 @@ static int cpt_append_err(cpt_seg_t* seg, cpt_t* cpt)
 
 /*
   handle stream choice and call libavl function, read_avl()
-*/ 
+*/
 
 static int avl_readfile(char* file, avl_grad_t* avl, avlcpt_opt_t opt)
 {
@@ -290,4 +295,3 @@ static int avl_readfile(char* file, avl_grad_t* avl, avlcpt_opt_t opt)
 
   return err;
 }
-
