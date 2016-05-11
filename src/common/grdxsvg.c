@@ -45,10 +45,10 @@ static rgbop_stop_t stop_merge(rgb_stop_t rs, op_stop_t os)
 }
 
 static rgb_stop_t rgb_stop_interp(rgb_stop_t rs0,
-				  rgb_stop_t rs1, 
+				  rgb_stop_t rs1,
 				  unsigned int z)
 {
-  double M = 
+  double M =
     ((double)z - (double)(rs0.z))/((double)(rs1.z) - (double)(rs0.z));
   rgb_stop_t rs;
 
@@ -56,15 +56,15 @@ static rgb_stop_t rgb_stop_interp(rgb_stop_t rs0,
   rs.r = rs0.r + M*(rs1.r - rs0.r);
   rs.g = rs0.g + M*(rs1.g - rs0.g);
   rs.b = rs0.b + M*(rs1.b - rs0.b);
-  
+
   return rs;
 }
 
 static op_stop_t op_stop_interp(op_stop_t os0,
-				op_stop_t os1, 
+				op_stop_t os1,
 				unsigned int z)
 {
-  double M = 
+  double M =
     ((double)z -(double)(os0.z))/((double)(os1.z) - (double)(os0.z));
   op_stop_t os;
 
@@ -74,9 +74,9 @@ static op_stop_t op_stop_interp(op_stop_t os0,
   return os;
 }
 
-/* 
+/*
    merge the independent rgb and opacity channels into
-   a single rgbop channel. This means we interpolate 
+   a single rgbop channel. This means we interpolate
    each of the channels at the z-values of the other
 */
 
@@ -89,7 +89,7 @@ static gstack_t* merge(gstack_t *rss, gstack_t *oss)
   /* get the first two of each type of stop */
 
   rgb_stop_t rs0, rs1;
-  
+
   err += gstack_pop(rss, &rs0);
   err += gstack_pop(rss, &rs1);
 
@@ -100,7 +100,7 @@ static gstack_t* merge(gstack_t *rss, gstack_t *oss)
     }
 
   op_stop_t os0, os1;
-  
+
   err += gstack_pop(oss, &os0);
   err += gstack_pop(oss, &os1);
 
@@ -157,7 +157,7 @@ static gstack_t* merge(gstack_t *rss, gstack_t *oss)
 	  rs0 = rs1;
 	  os0 = os1;
 
-	  int 
+	  int
             odone = gstack_pop(oss, &os1),
             rdone = gstack_pop(rss, &rs1);
 
@@ -200,6 +200,7 @@ static int merged_svg(gstack_t *ross, svg_t *svg)
 {
   svg_stop_t ss;
   rgbop_stop_t ros;
+  int errs = 0;
 
   while (gstack_pop(ross, &ros) == 0)
     {
@@ -208,10 +209,11 @@ static int merged_svg(gstack_t *ross, svg_t *svg)
       ss.colour.blue  = svg_it_rgb(ros.b);
       ss.opacity      = svg_it_op(ros.op);
       ss.value        = svg_it_z(ros.z);
-      svg_append(ss,svg);
+      if (svg_append(ss,svg) != 0)
+	errs++;
     }
 
-  return 0;
+  return (errs ? 1 : 0);
 }
 
 
@@ -233,6 +235,6 @@ extern int grdxsvg(gstack_t *rgb_stops,
     btrace("failed conversion of merged stops to svg");
 
   gstack_destroy(merged_stops);
-  
+
   return err;
 }
