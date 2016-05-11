@@ -17,12 +17,12 @@
 #include "svgx.h"
 #include "svgxdump.h"
 
-static int svgx_list(svgx_opt_t, svg_list_t*);
-static int svgx_first(svgx_opt_t, svg_list_t*);
-static int svgx_named(svgx_opt_t, svg_list_t*);
-static int svgx_all(svgx_opt_t, svg_list_t*);
+static int svgx_list(svgx_opt_t*, svg_list_t*);
+static int svgx_first(svgx_opt_t*, svg_list_t*);
+static int svgx_named(svgx_opt_t*, svg_list_t*);
+static int svgx_all(svgx_opt_t*, svg_list_t*);
 
-extern int svgx(svgx_opt_t opt)
+extern int svgx(svgx_opt_t *opt)
 {
   int err = 0;
   svg_list_t *list;
@@ -34,14 +34,14 @@ extern int svgx(svgx_opt_t opt)
     }
   else
     {
-      if (svg_read(opt.input.file, list) != 0)
+      if (svg_read(opt->input.file, list) != 0)
 	{
 	  btrace("error reading svg");
 	  err++;
 	}
       else
 	{
-	  switch (opt.job)
+	  switch (opt->job)
 	    {
 	    case job_list:
 	      err = svgx_list(opt, list);
@@ -74,17 +74,17 @@ extern int svgx(svgx_opt_t opt)
 
 static int svg_id(svg_t *svg, const char* fmt)
 {
-  printf(fmt,svg->name);
+  printf(fmt, svg->name);
   return 0;
 }
 
-static int svgx_list(svgx_opt_t opt, svg_list_t *list)
+static int svgx_list(svgx_opt_t *opt, svg_list_t *list)
 {
-  int n,err=0;
+  int n, err=0;
 
   n = svg_list_size(list);
 
-  if (opt.verbose)
+  if (opt->verbose)
     {
       if (n==0)
 	{
@@ -110,9 +110,9 @@ static int svgx_list(svgx_opt_t opt, svg_list_t *list)
 
 static int svg_select_name(svg_t*, char*);
 static int svg_select_first(svg_t*, char*);
-static int svgx_single(svgx_opt_t, svg_t*);
+static int svgx_single(svgx_opt_t*, svg_t*);
 
-static int svgx_first(svgx_opt_t opt, svg_list_t *list)
+static int svgx_first(svgx_opt_t *opt, svg_list_t *list)
 {
   svg_t *svg;
 
@@ -127,15 +127,15 @@ static int svgx_first(svgx_opt_t opt, svg_list_t *list)
   return svgx_single(opt, svg);
 }
 
-static int svgx_named(svgx_opt_t opt, svg_list_t *list)
+static int svgx_named(svgx_opt_t *opt, svg_list_t *list)
 {
   svg_t *svg;
 
   if ((svg = svg_list_select(list,
 			     (int (*)(svg_t*,void*))svg_select_name,
-			     opt.name)) == NULL)
+			     opt->name)) == NULL)
     {
-      btrace("couldn't find gradient named %s", opt.name);
+      btrace("couldn't find gradient named %s", opt->name);
       return 1;
     }
 
@@ -199,7 +199,7 @@ static dump_f dump_type(svgx_type_t type)
 
 /* write a single file */
 
-static int svgx_single(svgx_opt_t opt, svg_t *svg)
+static int svgx_single(svgx_opt_t *opt, svg_t *svg)
 {
   const char *file;
 
@@ -209,11 +209,11 @@ static int svgx_single(svgx_opt_t opt, svg_t *svg)
       return 1;
     }
 
-  file = opt.output.file;
+  file = opt->output.file;
 
-  if (flatten_type(opt.type))
+  if (flatten_type(opt->type))
     {
-      if (svg_flatten(svg, opt.format.alpha) != 0)
+      if (svg_flatten(svg, opt->format.alpha) != 0)
 	{
 	  btrace("failed to flatten transparency");
 	  return 1;
@@ -222,18 +222,18 @@ static int svgx_single(svgx_opt_t opt, svg_t *svg)
 
   dump_f dump;
 
-  if ((dump = dump_type(opt.type)) == NULL)
+  if ((dump = dump_type(opt->type)) == NULL)
     return 1;
 
-  if (dump(svg, &opt) != 0)
+  if (dump(svg, opt) != 0)
     {
       btrace("failed conversion");
       return 1;
     }
 
-  if (opt.verbose)
+  if (opt->verbose)
     printf("wrote %s to %s\n",
-	   (opt.name ? opt.name : "gradient"),
+	   (opt->name ? opt->name : "gradient"),
 	   (file ? file : "<stdout>"));
 
   return 0;
@@ -259,7 +259,7 @@ static int svg_flatten2(svg_t *svg, rgb_t *alpha)
   return svg_flatten(svg, *alpha);
 }
 
-static int svgx_all(svgx_opt_t opt, svg_list_t *list)
+static int svgx_all(svgx_opt_t *opt, svg_list_t *list)
 {
   /* coerce explicit */
 
@@ -271,11 +271,11 @@ static int svgx_all(svgx_opt_t opt, svg_list_t *list)
 
   /* coerce flat */
 
-  if (flatten_type(opt.type))
+  if (flatten_type(opt->type))
     {
       if (svg_list_iterate(list,
 			   (int (*)(svg_t*, void*))svg_flatten2,
-			   &(opt.format.alpha)) != 0)
+			   &(opt->format.alpha)) != 0)
 	{
 	  btrace("failed coerce explicit");
 	  return 1;
@@ -284,13 +284,13 @@ static int svgx_all(svgx_opt_t opt, svg_list_t *list)
 
   int (*dump)(svg_t*, void*);
 
-  if ((dump = (int (*)(svg_t*, void*))dump_type(opt.type)) == NULL)
+  if ((dump = (int (*)(svg_t*, void*))dump_type(opt->type)) == NULL)
     return 1;
 
-  if (opt.verbose)
+  if (opt->verbose)
     printf("converting all gradients:\n");
 
-  if (svg_list_iterate(list, dump, &opt) != 0)
+  if (svg_list_iterate(list, dump, opt) != 0)
     {
       btrace("failed writing all gradients");
       return 1;

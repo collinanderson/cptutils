@@ -61,6 +61,6 @@ typedef struct
   } input, output;
 } svgx_opt_t;
 
-extern int svgx(svgx_opt_t);
+extern int svgx(svgx_opt_t*);
 
 #endif

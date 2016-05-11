@@ -286,7 +286,7 @@ int main(int argc, char** argv)
 
   btrace_enable("svgx");
 
-  err = svgx(opt);
+  err = svgx(&opt);
 
   if (err)
     {
