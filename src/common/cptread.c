@@ -53,6 +53,8 @@ extern int cpt_read(const char *path, cpt_t *cpt)
 		btrace("weird error reading %s", path);
 	    }
 	}
+
+      fclose(stream);
     }
   else
     err = cpt_parse(stdin, cpt);
@@ -270,10 +272,14 @@ static int cpt_parse_segment(const char *line, cpt_t *cpt)
 
     default :
       btrace("segment with strange number of tokens (%i)", ntok);
-      return 1;
+      err++;
     }
 
-  if (err) return 1;
+  if (err)
+    {
+      cpt_seg_destroy(seg);
+      return 1;
+    }
 
   return cpt_append(seg, cpt);
 }
