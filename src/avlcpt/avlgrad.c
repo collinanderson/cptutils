@@ -20,7 +20,7 @@
 
 #include "avlgrad.h"
 
-/* 
+/*
    defined in odbparse.c but declared here -
    odbparse() is the main parser, odbdebug the
    parser debug flag
@@ -37,9 +37,9 @@ extern int avl_read(FILE* st, avl_grad_t* avl, int verbose, int debug)
 {
   yyscan_t odbscan;
 
-  /* 
+  /*
      assign global identtab acted upon by the bison parser, I'd like
-     this to be an argument for odbparse, but bison only allows 
+     this to be an argument for odbparse, but bison only allows
      one argument & that is used for the scanner
   */
 
@@ -61,7 +61,7 @@ extern int avl_read(FILE* st, avl_grad_t* avl, int verbose, int debug)
       btrace("problem initailising scanner : %s", strerror(errno));
       return 1;
     }
-  
+
   odbset_in(st, odbscan);
   odbset_debug(debug, odbscan);
 
@@ -79,10 +79,10 @@ extern int avl_read(FILE* st, avl_grad_t* avl, int verbose, int debug)
 
   odblex_destroy(odbscan);
 
-  /* 
+  /*
      the parse should have produced an odb_t structure in
-     the variable odb (declared & defined in obd_bridge), 
-     as well as filling the idenntab and string tab, which 
+     the variable odb (declared & defined in obd_bridge),
+     as well as filling the idenntab and string tab, which
      need to be refered to when interpreting odb_string
      and odb_ident quantities.
   */
@@ -139,7 +139,7 @@ static int lookup_id(const char* name, identtab_t* tab)
   return ident->id;
 }
 
-/* not used 
+/* not used
 
 static const char* lookup_name(int id, identtab_t* tab)
 {
@@ -150,7 +150,7 @@ static const char* lookup_name(int id, identtab_t* tab)
       btrace("failed lookup for %i", id);
       return 0;
     }
-  
+
   return ident->name;
 }
 
@@ -191,12 +191,16 @@ static int traverse(odb_uint_t id, const char* att, identtab_t* tab, odb_t* odb,
   with error checking).
 */
 
-static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* avl, int verbose)
+static int odb_avl(odb_t *odb,
+		   identtab_t *itab,
+		   identtab_t *stab,
+		   avl_grad_t *avl,
+		   int verbose)
 {
   int class, colour, child, red, green, blue, minnum, maxnum;
   odb_record_t *Rl, *Rs;
-  odb_uint_t odbid, legid, symid, *idxs, *idxl;
-  avl_seg_t* segs = NULL; 
+  odb_uint_t odbid, legid, symid;
+  avl_seg_t* segs = NULL;
   int i, n, ns, nl;
 
   /* get Legend and SymTab records */
@@ -219,11 +223,11 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
     }
 
   /* If we can't find these then we probably don't have an avl file */
-  
+
   class  = lookup_id("Class", itab);
   child  = lookup_id("Child", itab);
   colour = lookup_id("Color", itab);
-   
+
   if (!(class && child && colour))
     {
       btrace("is this really an AVL file?");
@@ -235,7 +239,7 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
   red    = lookup_id("Red", itab);
   green  = lookup_id("Green", itab);
   blue   = lookup_id("Blue", itab);
-  
+
   if (!(red || green || blue))
     {
       btrace("No RGB attributes in the file!");
@@ -246,7 +250,7 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 
   minnum = lookup_id("MinNum", itab);
   maxnum = lookup_id("MaxNum", itab);
-  
+
   if (!(minnum && maxnum))
     {
       btrace("No height attributes in the file!");
@@ -254,8 +258,8 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
     }
 
   /*
-    the label strings are held in the class attribute,  while 
-    the colours are in the symtab. To merge these we first create 
+    the label strings are held in the class attribute,  while
+    the colours are in the symtab. To merge these we first create
     2 arrays which index the appropriate fields
   */
 
@@ -320,14 +324,7 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 
   /* create indicies */
 
-  idxs = malloc(ns*sizeof(odb_uint_t));
-  idxl = malloc(nl*sizeof(odb_uint_t));
-
-  if ((!idxs) || (!idxl))
-    {
-      btrace("out of memory");
-      return 1;
-    }
+  odb_uint_t idxs[ns], idxl[nl];
 
   if ((n = Rl->n) > 0)
     {
@@ -379,25 +376,25 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 
       il = idxl[i];
       fl = Rl->fields + il;
-      
+
       if (fl->attribute != class)
 	{
 	  btrace("indexing error");
-	  return 1;
+	  goto cleanup_segs;
 	}
-      
+
       if (fl->type != odb_uint)
 	{
 	  btrace("Class %i value not an integer type!", il);
-	  return 1;
+	  goto cleanup_segs;
 	}
-      
+
       lcid = fl->value.u;
-      
+
       if ((rl = odb_class_id_lookup(lcid, odb)) == NULL)
 	{
 	  btrace("failed to find LClass record");
-	  return 1;
+	  goto cleanup_segs;
 	}
 
       if ((fl = odb_attribute_ident_lookup(minnum, rl)) == NULL)
@@ -410,9 +407,9 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 	  if (fl->type != odb_float)
 	    {
 	      btrace("MinNum not a float type!");
-	      return 1;
+	      goto cleanup_segs;
 	    }
-	  
+
 	  min = fl->value.f;
 	}
 
@@ -426,9 +423,9 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 	  if (fl->type != odb_float)
 	    {
 	      btrace("MaxNum not a float type!");
-	      return 1;
+	      goto cleanup_segs;
 	    }
-	  
+
 	  max = fl->value.f;
 	}
 
@@ -436,45 +433,45 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 
       is = idxs[i];
       fs = Rs->fields + is;
-      
+
       if (fs->attribute != child)
 	{
 	  btrace("indexing error");
-	  return 1;
+	  goto cleanup_segs;
 	}
-      
+
       if (fs->type != odb_uint)
 	{
 	  btrace("Color %i value not an integer type!", is);
-	  return 1;
+	  goto cleanup_segs;
 	}
-      
+
       bshid = fs->value.u;
-      
+
       if ((rs = odb_class_id_lookup(bshid, odb)) == NULL)
 	{
 	  btrace("failed to find BshSym record");
-	  return 1;
+	  goto cleanup_segs;
 	}
 
       if ((fs = odb_attribute_ident_lookup(colour, rs)) == NULL)
 	{
 	  btrace("failed to find Color field in BBhSym");
-	  return 1;
+	  goto cleanup_segs;
 	}
 
       if (fs->type != odb_uint)
 	{
 	  btrace("Color %i value not an integer type!", is);
-	  return 1;
+	  goto cleanup_segs;
 	}
-      
+
       colid = fs->value.u;
-            
+
       if ((rs = odb_class_id_lookup(colid, odb)) == NULL)
 	{
 	  btrace("failed to find Color record");
-	  return 1;
+	  goto cleanup_segs;
 	}
 
       /* now to the colours */
@@ -492,7 +489,7 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 	      if (fr->type != odb_hex)
 		{
 		  btrace("Red component not a hex type!");
-		  return 1;
+		  goto cleanup_segs;
 		}
 	      segs[i].r = fr->value.h;
 	      ncols++;
@@ -508,7 +505,7 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 	      if (fg->type != odb_hex)
 		{
 		  btrace("Green component not a hex type!");
-		  return 1;
+		  goto cleanup_segs;
 		}
 	      segs[i].g = fg->value.h;
 	      ncols++;
@@ -524,7 +521,7 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
 	      if (fb->type != odb_hex)
 		{
 		  btrace("Blue component not a hex type!");
-		  return 1;
+		  goto cleanup_segs;
 		}
 	      segs[i].b = fb->value.h;
 	      ncols++;
@@ -549,6 +546,12 @@ static int odb_avl(odb_t* odb, identtab_t* itab, identtab_t* stab, avl_grad_t* a
   avl->seg = segs;
 
   return 0;
+
+ cleanup_segs:
+
+  free(segs);
+
+  return 1;
 }
 
 extern int avl_clean(avl_grad_t* avl)
