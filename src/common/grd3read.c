@@ -124,7 +124,17 @@ static int grd3_read_stream(FILE *s, grd3_t *grad)
 	}
 
       for (size_t j = 0 ; j < len ; j++)
-	name[j] = fgetc(s);
+	{
+	  int c = fgetc(s);
+
+	  if (c < 0)
+	    {
+	      btrace("file truncated");
+	      return 1;
+	    }
+
+	  name[j] = c;
+	}
 
       name[len] = '\0';
 
