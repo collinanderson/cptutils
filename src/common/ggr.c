@@ -58,6 +58,7 @@
 
 #define EPSILON 1e-10
 #define PI 3.141592653
+#define MAX_SEGMENTS 4096
 
 #define MAX(a,b) (((a)>(b)) ? (a) : (b))
 #define MIN(a,b) (((a)>(b)) ? (b) : (a))
@@ -176,7 +177,7 @@ extern gradient_t* grad_load_gradient(const char* path)
 
   num_segments = atoi(line);
 
-  if (num_segments < 1)
+  if ((num_segments < 1) || (num_segments > MAX_SEGMENTS))
     {
       btrace("invalid number of segments in %s", path);
       free(grad);
