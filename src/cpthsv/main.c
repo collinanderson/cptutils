@@ -191,6 +191,7 @@ static int parse_transform(char* T,hsvtrans_t* t,cpthsv_opt_t* opt)
       return 1;
     case 2:
       co = '%';
+      /* fallthrough */
     case 3:
 
       t->z = z;
