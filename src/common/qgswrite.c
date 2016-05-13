@@ -156,6 +156,9 @@ static char* join_strings(char **strings, size_t n, char sep)
 static char* mid_stops_string(qgs_t *qgs)
 {
   int n = qgs->n;
+
+  if (n < 3) return NULL;
+
   char *stops[n-2];
 
   for (int i = 0 ; i < n-2 ; i++)
@@ -187,20 +190,28 @@ static int qgs_write_midstops(xmlTextWriter *writer, qgs_t *qgs)
   if (qgs_attribute(writer, "k", "stops", "prop") != 0)
     return 1;
 
-  char *str = mid_stops_string(qgs);
+  char *str;
+
+  if ((str = mid_stops_string(qgs)) == NULL)
+    return 1;
+
+  int err = 0;
 
   if (qgs_attribute(writer, "v", str, "prop") != 0)
-    return 1;
+    {
+      btrace("error writing attribute");
+      err++;
+    }
 
   free(str);
 
   if (xmlTextWriterEndElement(writer) < 0)
     {
       btrace("error from close prop");
-      return 1;
+      err++;
     }
 
-  return 0;
+  return err > 0;
 }
 
 static int qgs_write_colorramp_props(xmlTextWriter *writer, qgs_t *qgs)
