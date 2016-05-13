@@ -82,9 +82,9 @@ extern gradient_t *grad_new_gradient(void)
   if ((grad = malloc(sizeof(gradient_t))) == NULL)
     return NULL;
 
-  grad->name   	     = NULL;
-  grad->filename     = NULL;
-  grad->segments     = NULL;
+  grad->name = NULL;
+  grad->filename = NULL;
+  grad->segments = NULL;
   grad->last_visited = NULL;
 
   return grad;
@@ -94,7 +94,7 @@ extern void grad_free_gradient(gradient_t *grad)
 {
   if (grad == NULL) return;
 
-  if (grad->name)     free(grad->name);
+  if (grad->name) free(grad->name);
   if (grad->filename) free(grad->filename);
   if (grad->segments) seg_free_segments(grad->segments);
 
@@ -106,7 +106,7 @@ static void warn_truncated(const char* where)
   btrace("unexpected end of file %s", where);
 }
 
-static gradient_t* grad_load_stream(const char* path, FILE*);
+static gradient_t* load_stream(const char* path, FILE*);
 
 extern gradient_t* grad_load_gradient(const char* path)
 {
@@ -114,7 +114,7 @@ extern gradient_t* grad_load_gradient(const char* path)
 
   if (path == NULL)
     {
-      grad = grad_load_stream(path, stdin);
+      grad = load_stream(path, stdin);
     }
   else
     {
@@ -126,18 +126,17 @@ extern gradient_t* grad_load_gradient(const char* path)
 	  return NULL;
 	}
 
-      grad = grad_load_stream(path, stream);
+      grad = load_stream(path, stream);
       fclose(stream);
     }
 
   return grad;
 }
 
-static gradient_t* grad_load_stream(const char* path, FILE *stream)
+static int load_grad(const char* path, FILE *stream, gradient_t *grad);
+
+static gradient_t* load_stream(const char* path, FILE *stream)
 {
-  gradient_t *grad;
-  grad_segment_t *seg, *prev;
-  int i, num_segments;
   char line[1024];
 
   if (fgets(line, 1024, stream) == NULL)
@@ -152,15 +151,30 @@ static gradient_t* grad_load_stream(const char* path, FILE *stream)
       return NULL;
     }
 
-  if ((grad = grad_new_gradient()) == NULL)
+  gradient_t *grad =  grad_new_gradient();
+
+  if (grad == NULL)
     return NULL;
 
   grad->filename = (path ? strdup(path) : strdup("<stdin>"));
 
+  if (load_grad(path, stream, grad) != 0)
+    {
+      grad_free_gradient(grad);
+      return NULL;
+    }
+
+  return grad;
+}
+
+static int load_grad(const char* path, FILE *stream, gradient_t *grad)
+{
+  char line[1024];
+
   if (fgets(line, 1024, stream) == NULL)
     {
       warn_truncated("after header");
-      return NULL;
+      return 1;
     }
 
   /*
@@ -182,26 +196,25 @@ static gradient_t* grad_load_stream(const char* path, FILE *stream)
       if (fgets(line, 1024, stream) == NULL)
 	{
 	  warn_truncated("after segments line");
-	  return NULL;
+	  return 1;
 	}
     }
   else
     grad->name = (path ?  basename(path) : strdup("cptutils-output"));
 
-  /* next line specifies number of segments */
-
-  num_segments = atoi(line);
+  int num_segments = atoi(line);
 
   if ((num_segments < 1) || (num_segments > MAX_SEGMENTS))
     {
       btrace("invalid number of segments in %s", path);
-      return NULL;
+      return 1;
     }
 
-  prev = NULL;
+  grad_segment_t *prev = NULL;
 
-  for (i = 0 ; i < num_segments ; i++)
+  for (int i = 0 ; i < num_segments ; i++)
     {
+      grad_segment_t *seg;
       int type, color, ect_left, ect_right;
 
       seg = seg_new_segment();
@@ -215,7 +228,7 @@ static gradient_t* grad_load_stream(const char* path, FILE *stream)
       if (fgets(line, 1024, stream) == NULL)
 	{
 	  btrace("unexpected end of file at segment %i", i+1);
-	  return NULL;
+	  return 1;
 	}
 
       switch (sscanf(line, "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%d%d%d%d",
@@ -270,7 +283,7 @@ static gradient_t* grad_load_stream(const char* path, FILE *stream)
 		if (err)
 		  {
 		    btrace("error converting rgb->hsv !");
-		    return NULL;
+		    return 1;
 		  }
 
 		seg->color = grad_hsv_type(color, hsv0[0], hsv1[0]);
@@ -281,19 +294,19 @@ static gradient_t* grad_load_stream(const char* path, FILE *stream)
 	    default:
 
 	      btrace("unknown colour model (%i)", color);
-	      return NULL;
+	      return 1;
 	    }
 
 	  break;
 
 	default:
 	  btrace("badly formatted gradient segment %d in %s", i, path);
-	  return NULL;
+	  return 1;
 	}
       prev = seg;
     }
 
-  return grad;
+  return 0;
 }
 
 /*
