@@ -42,15 +42,22 @@ static int qgs_attribute(xmlTextWriter *writer,
 
 static char* end_stop(qgs_entry_t *entry)
 {
-  char *str = malloc(END_STOP_LEN);
-  if (snprintf(str, END_STOP_LEN, "%i,%i,%i,%i",
-	       entry->rgb.red,
-	       entry->rgb.green,
-	       entry->rgb.blue,
-	       entry->opacity) >= END_STOP_LEN)
-    return NULL;
+  char *str;
 
-  return str;
+  if ((str = malloc(END_STOP_LEN)) != NULL)
+    {
+
+      if (snprintf(str, END_STOP_LEN, "%i,%i,%i,%i",
+		   entry->rgb.red,
+		   entry->rgb.green,
+		   entry->rgb.blue,
+		   entry->opacity) < END_STOP_LEN)
+	return str;
+
+      free(str);
+    }
+
+  return NULL;
 }
 
 /* 6 + 4*3 + 4 + 1 */
@@ -59,16 +66,22 @@ static char* end_stop(qgs_entry_t *entry)
 
 static char* mid_stop(qgs_entry_t *entry)
 {
-  char *str = malloc(MID_STOP_LEN);
-  if (snprintf(str, MID_STOP_LEN, "%.4f;%i,%i,%i,%i",
-	       entry->value,
-	       entry->rgb.red,
-	       entry->rgb.green,
-	       entry->rgb.blue,
-	       entry->opacity) >= MID_STOP_LEN)
-    return NULL;
+  char *str;
 
-  return str;
+  if ((str = malloc(MID_STOP_LEN)) != NULL)
+    {
+      if (snprintf(str, MID_STOP_LEN, "%.4f;%i,%i,%i,%i",
+		   entry->value,
+		   entry->rgb.red,
+		   entry->rgb.green,
+		   entry->rgb.blue,
+		   entry->opacity) < MID_STOP_LEN)
+	return str;
+
+      free(str);
+    }
+
+  return NULL;
 }
 
 static int qgs_write_endstop(xmlTextWriter *writer,
