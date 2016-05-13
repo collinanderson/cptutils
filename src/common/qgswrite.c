@@ -127,30 +127,30 @@ static char* join_strings(char **strings, size_t n, char sep)
 
   char *buffer;
 
-  if ((buffer = malloc(sz)) == NULL)
-    return NULL;
-
-  char *p = buffer;
-  size_t k;
-
-  if ((k = snprintf(buffer, sz, "%s", strings[0])) >= sz)
+  if ((buffer = malloc(sz)) != NULL)
     {
-      btrace("string truncation");
-      return NULL;
-    }
+      char *p = buffer;
+      size_t k;
+      int err = 0;
 
-  for (int i = 1 ; i < n ; i++)
-    {
-      p += k;
-      sz -= k;
-      if ((k = snprintf(p, sz, "%c%s", sep, strings[i])) >= sz)
+      if ((k = snprintf(buffer, sz, "%s", strings[0])) >= sz)
+	err++;
+
+      for (int i = 1 ; i < n ; i++)
 	{
-	  btrace("string truncation");
-	  return NULL;
+	  p += k;
+	  sz -= k;
+	  if ((k = snprintf(p, sz, "%c%s", sep, strings[i])) >= sz)
+	    err++;
 	}
+
+      if (err == 0) return buffer;
+
+      btrace("string truncation");
+      free(buffer);
     }
 
-  return buffer;
+  return NULL;
 }
 
 static char* mid_stops_string(qgs_t *qgs)
