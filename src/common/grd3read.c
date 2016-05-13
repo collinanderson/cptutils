@@ -20,6 +20,8 @@
 #include "grd3read.h"
 #include "btrace.h"
 
+#define TITLE_LEN_MAX 4095
+
 static int grd3_read_stream(FILE*, grd3_t*);
 
 extern int grd3_read(const char* file, grd3_t* grd3)
@@ -111,6 +113,11 @@ static int grd3_read_stream(FILE *s, grd3_t *grad)
   else if (len == 0)
     {
       btrace("title length is zero");
+      return 1;
+    }
+  else if (len > TITLE_LEN_MAX)
+    {
+      btrace("title length %d exceeds maximum", len);
       return 1;
     }
   else
