@@ -106,24 +106,39 @@ static void warn_truncated(const char* where)
   btrace("unexpected end of file %s", where);
 }
 
+static gradient_t* grad_load_stream(const char* path, FILE*);
+
 extern gradient_t* grad_load_gradient(const char* path)
 {
-  FILE           *stream;
-  gradient_t     *grad;
-  grad_segment_t *seg, *prev;
-  int             num_segments;
-  int             i;
-  char            line[1024];
+  gradient_t *grad;
 
   if (path == NULL)
     {
-       stream = stdin;
+      grad = grad_load_stream(path, stdin);
     }
-  else if ((stream = fopen(path, "rb")) == NULL)
+  else
     {
-      btrace("failed to open %s : %s", path, strerror(errno));
-      return NULL;
+      FILE *stream = fopen(path, "rb");
+
+      if (stream == NULL)
+	{
+	  btrace("failed to open %s : %s", path, strerror(errno));
+	  return NULL;
+	}
+
+      grad = grad_load_stream(path, stream);
+      fclose(stream);
     }
+
+  return grad;
+}
+
+static gradient_t* grad_load_stream(const char* path, FILE *stream)
+{
+  gradient_t *grad;
+  grad_segment_t *seg, *prev;
+  int i, num_segments;
+  char line[1024];
 
   if (fgets(line, 1024, stream) == NULL)
     {
@@ -155,12 +170,12 @@ extern gradient_t* grad_load_gradient(const char* path)
     string>)
   */
 
-  if (strncmp(line,"Name:",5) == 0)
+  if (strncmp(line, "Name:", 5) == 0)
     {
       char *s,*e;
 
       for (s = line+5 ; *s && (*s == ' ') ; s++);
-      if ((e = strchr(s,'\n')) != NULL) *e = '\0';
+      if ((e = strchr(s, '\n')) != NULL) *e = '\0';
 
       grad->name = strdup(s);
 
@@ -180,7 +195,6 @@ extern gradient_t* grad_load_gradient(const char* path)
   if ((num_segments < 1) || (num_segments > MAX_SEGMENTS))
     {
       btrace("invalid number of segments in %s", path);
-      free(grad);
       return NULL;
     }
 
@@ -278,8 +292,6 @@ extern gradient_t* grad_load_gradient(const char* path)
 	}
       prev = seg;
     }
-
-  if (stream != stdin) fclose(stream);
 
   return grad;
 }
