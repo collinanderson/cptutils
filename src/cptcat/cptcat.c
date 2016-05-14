@@ -65,14 +65,14 @@ extern int cptcat(cptcat_opt_t opt)
     can be done by applying makecpt to the offending
     component file.
   */
-  
+
   for (i=0 ; i<n ; i++)
     {
       double *range = dat[i].range;
 
       if (range[0] >= range[1])
 	{
-	  btrace("%s is decreasing", dat[i].file); 
+	  btrace("%s is decreasing", dat[i].file);
 	  return 1;
 	}
     }
@@ -89,9 +89,9 @@ extern int cptcat(cptcat_opt_t opt)
       if (dat[i].range[1] != dat[i+1].range[0])
 	{
 	  btrace("non-contiguous input:");
-	  btrace("  %s : %g < z < %g", 
+	  btrace("  %s : %g < z < %g",
 		     dat[i].file, dat[i].range[0], dat[i].range[1]);
-	  btrace("  %s : %g < z < %g", 
+	  btrace("  %s : %g < z < %g",
 		     dat[i+1].file, dat[i+1].range[0], dat[i+1].range[1]);
 	  return 1;
 	}
@@ -169,6 +169,8 @@ extern int cptcat(cptcat_opt_t opt)
       btrace("failed write to %s", opt.output);
       return 1;
     }
+
+  cpt_destroy(cpt);
 
   return 0;
 }
