@@ -30,6 +30,80 @@ static int datcmp(const cptdat_t *a, const cptdat_t *b)
   return 0;
 }
 
+static int cptcat2(cptcat_opt_t *opt, cpt_t *cpt, cptdat_t *dat)
+{
+  int n = opt->input.n;
+
+  /* check all have the same model */
+
+  model_t model = dat[0].cpt->model;
+
+  for (int i = 1 ; i < n ; i++)
+    {
+      if (dat[0].cpt->model != model)
+	{
+	  btrace("incompatible colour models in input");
+	  return 1;
+	}
+    }
+
+  cpt->model = model;
+
+  cpt->nan = dat[0].cpt->nan;
+  cpt->bg  = dat[0].cpt->bg;
+  cpt->fg  = dat[n-1].cpt->fg;
+
+  for (int i = 0 ; i < n ; i++)
+    {
+      cpt_seg_t *seg;
+
+      while ((seg = cpt_pop(dat[i].cpt)) != NULL)
+	{
+	  if (cpt_append(seg, cpt) != 0)
+	    {
+	      btrace("failed prepend");
+	      return 1;
+	    }
+	}
+    }
+
+  /*
+    create hyphenated name for new file, this has length
+    which is the sum of lengths of the substrings, plus
+    n-1 hyphens, plus a termating null.
+  */
+
+  size_t nctot = 0;
+
+  for (int i = 0 ; i < n ; i++)
+    nctot += (dat[i].cpt->name ? strlen(dat[i].cpt->name) : 1);
+
+  cpt->name = malloc(nctot + n);
+
+  strcpy(cpt->name, (dat[0].cpt->name ? dat[0].cpt->name : "x"));
+
+  for (int i = 1 ; i < n ; i++)
+    {
+      strcat(cpt->name, "-");
+      strcat(cpt->name, (dat[i].cpt->name ? dat[i].cpt->name : "x"));
+    }
+
+  /* destroy components */
+
+  for (int i = 0 ; i < n ; i++)
+    cpt_destroy(dat[i].cpt);
+
+  /* write to file*/
+
+  if (cpt_write(opt->output, cpt) != 0)
+    {
+      btrace("failed write to %s", opt->output);
+      return 1;
+    }
+
+  return 0;
+}
+
 extern int cptcat(cptcat_opt_t opt)
 {
   int i, n = opt.input.n;
@@ -97,18 +171,6 @@ extern int cptcat(cptcat_opt_t opt)
 	}
     }
 
-  /* check all have the same model */
-
-  model_t model = dat[0].cpt->model;
-
-  for (i=1 ; i<n ; i++)
-    {
-      if (dat[0].cpt->model != model)
-	{
-	  btrace("incompatible colour models in input");
-	  return 1;
-	}
-    }
 
   /* create the new cpt */
 
@@ -117,60 +179,9 @@ extern int cptcat(cptcat_opt_t opt)
   if ((cpt = cpt_new()) == NULL)
     return 1;
 
-  cpt->model = model;
-
-  cpt->nan = dat[0].cpt->nan;
-  cpt->bg  = dat[0].cpt->bg;
-  cpt->fg  = dat[n-1].cpt->fg;
-
-  for (i=0 ; i<n ; i++)
-    {
-      cpt_seg_t *seg;
-
-      while ((seg = cpt_pop(dat[i].cpt)) != NULL)
-	{
-	  if (cpt_append(seg, cpt) != 0)
-	    {
-	      btrace("failed prepend");
-	      return 1;
-	    }
-	}
-    }
-
-  /*
-    create hyphenated name for new file, this has length
-    which is the sum of lengths of the substrings, plus
-    n-1 hyphens, plus a termating null.
-  */
-
-  size_t nctot = 0;
-
-  for (i=0 ; i<n ; i++)
-    nctot += (dat[i].cpt->name ? strlen(dat[i].cpt->name) : 1);
-
-  cpt->name = malloc(nctot + n);
-
-  strcpy(cpt->name, (dat[0].cpt->name ? dat[0].cpt->name : "x"));
-  for (i=1 ; i<n ; i++)
-    {
-      strcat(cpt->name, "-");
-      strcat(cpt->name, (dat[i].cpt->name ? dat[i].cpt->name : "x"));
-    }
-
-  /* destroy components */
-
-  for (i=0 ; i<n ; i++)
-    cpt_destroy(dat[i].cpt);
-
-  /* write to file*/
-
-  if (cpt_write(opt.output, cpt) != 0)
-    {
-      btrace("failed write to %s", opt.output);
-      return 1;
-    }
+  int err = cptcat2(&opt, cpt, dat);
 
   cpt_destroy(cpt);
 
-  return 0;
+  return err;
 }
