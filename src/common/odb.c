@@ -12,9 +12,9 @@
 #include "odb.h"
 #include "btrace.h"
 
-/* creation of odb record list - used in parser actions */  
+/* creation of odb record list - used in parser actions */
 
-extern odb_field_list_t* odb_create_field_list(odb_ident_t att,odb_value_t val)
+extern odb_field_list_t* odb_create_field_list(odb_ident_t att, odb_value_t val)
 {
   odb_field_list_t* field;
 
@@ -43,7 +43,7 @@ extern odb_record_list_t* odb_create_record_list(odb_ident_t class,
   return record;
 }
 
-extern odb_t* odb_create_list(odb_uint_t major,odb_uint_t minor,odb_record_list_t* list)
+extern odb_t* odb_create_list(odb_uint_t major, odb_uint_t minor, odb_record_list_t* list)
 {
   odb_t* odb;
 
@@ -69,7 +69,7 @@ extern void odb_destroy(odb_t* odb)
 
   if (n)
     {
-      int i; 
+      int i;
       odb_record_t* rec = odb->records;
 
       for (i=0 ; i<n ; i++)
@@ -120,16 +120,16 @@ static void odb_destroy_field_list(odb_field_list_t* f)
 
 /*
   here we serialise the odb abstract syntax tree, converting linked
-  lists to arrays 
+  lists to arrays
 */
 
-static int record_serialise(odb_record_list_t*,identtab_t*,odb_record_t*);
+static int record_serialise(odb_record_list_t*, identtab_t*, odb_record_t*);
 
-extern int odb_serialise(odb_t* odb,identtab_t* tab)
+extern int odb_serialise(odb_t* odb, identtab_t* tab)
 {
   odb_record_list_t* recls;
   odb_record_t* rec;
-  int n,i;
+  int n, i;
 
   if (! odb->list)
     {
@@ -155,21 +155,21 @@ extern int odb_serialise(odb_t* odb,identtab_t* tab)
     {
       /* reverse the linked list order */
 
-      if (record_serialise(recls,tab,rec+(n-1-i)) != 0)
+      if (record_serialise(recls, tab, rec+(n-1-i)) != 0)
 	{
 	  odb_ident_t class;
 	  odb_uint_t  id;
 	  ident_t* ident;
 
 	  id    = recls->id;
-	  class = recls->class; 
-	  
-	  if ((ident = identtab_id_lookup(tab,class)) == NULL)
-	    btrace("failed to serialise record %i (and class lookup failed)",id);
-	  else
-	    btrace("failed to serialise record %s.%i",ident->name,id);
+	  class = recls->class;
 
-	  return 1;
+	  if ((ident = identtab_id_lookup(tab, class)) == NULL)
+	    btrace("failed to serialise record %i (and class lookup failed)", id);
+	  else
+	    btrace("failed to serialise record %s.%i", ident->name, id);
+
+	  goto cleanup_on_fail;
 	}
     }
 
@@ -177,62 +177,74 @@ extern int odb_serialise(odb_t* odb,identtab_t* tab)
   odb->records = rec;
 
   return 0;
+
+ cleanup_on_fail:
+
+  free(rec);
+
+  return 1;
 }
 
-static int field_serialise(odb_field_list_t*,odb_field_t*);
+static int field_serialise(odb_field_list_t*, odb_field_t*);
 
-static int record_serialise(odb_record_list_t* recls,identtab_t* tab,odb_record_t* rec)
+static int record_serialise(odb_record_list_t* recls, identtab_t* tab, odb_record_t* rec)
 {
   odb_field_list_t* fl;
-  odb_field_t* f;
+  odb_field_t* f = NULL;
   int n;
 
-  rec->id    = recls->id;
+  rec->id = recls->id;
   rec->class = recls->class;
 
   rec->n = 0;
   rec->fields = NULL;
 
-  for (n=0,fl=recls->fields ; fl ; fl=fl->next) n++; 
+  for (n=0, fl=recls->fields ; fl ; fl=fl->next) n++;
 
   if (n)
     {
-      int i;
-
       if ((f = malloc(n*sizeof(odb_field_t))) == NULL)
 	{
 	  btrace("out of memory");
 	  return 1;
 	}
 
-      for (i=0,fl=recls->fields ; fl ; fl=fl->next,i++)
+      int i;
+
+      for (i=0, fl=recls->fields ; fl ; fl=fl->next, i++)
 	{
 	  /* reverse the linked list order */
 
-	  if (field_serialise(fl,f+(n-i-1)) != 0)
+	  if (field_serialise(fl, f+(n-i-1)) != 0)
 	    {
 	      odb_ident_t att;
 	      ident_t* ident;
 
-	      att = fl->attribute; 
-	  
-	      if ((ident = identtab_id_lookup(tab,att)) == NULL)
-		btrace("failed to serialise field %i (and attribute lookup failed)",i);
+	      att = fl->attribute;
+
+	      if ((ident = identtab_id_lookup(tab, att)) == NULL)
+		btrace("failed to serialise field %i (and attribute lookup failed)", i);
 	      else
-		btrace("failed to serialise field %i, attribute %s",i,ident->name);
-	      
-	      return 1;
+		btrace("failed to serialise field %i, attribute %s", i, ident->name);
+
+	      goto cleanup_on_fail;
 	    }
 	}
- 
+
       rec->n = n;
       rec->fields = f;
     }
 
   return 0;
-} 
 
-static int field_serialise(odb_field_list_t* fl,odb_field_t* f)
+ cleanup_on_fail:
+
+  free(f);
+
+  return 0;
+}
+
+static int field_serialise(odb_field_list_t* fl, odb_field_t* f)
 {
   f->attribute = fl->attribute;
   f->type      = fl->type;
@@ -241,29 +253,29 @@ static int field_serialise(odb_field_list_t* fl,odb_field_t* f)
   return 0;
 }
 
-/* 
+/*
    odb structure searches - we just do a linear search, there are only going to
    be a few hundred of these at most. this is less painful than you would think
    since there are no strcmp() calls, just integer compares (due to use of the
    identifier table)
 */
 
-extern odb_record_t* odb_class_name_lookup(const char* class,identtab_t* tab,odb_t* odb)
+extern odb_record_t* odb_class_name_lookup(const char* class, identtab_t* tab, odb_t* odb)
 {
   ident_t* ident;
 
-  if ((ident = identtab_name_lookup(tab,class)) == NULL)
+  if ((ident = identtab_name_lookup(tab, class)) == NULL)
     {
-      btrace("failed lookup of class %s",class);
+      btrace("failed lookup of class %s", class);
       return NULL;
     }
 
-  return odb_class_ident_lookup(ident->id,odb);
+  return odb_class_ident_lookup(ident->id, odb);
 }
 
-extern odb_record_t* odb_class_ident_lookup(odb_ident_t id,odb_t* odb)
+extern odb_record_t* odb_class_ident_lookup(odb_ident_t id, odb_t* odb)
 {
-  int n,i;
+  int n, i;
   odb_record_t* rec;
 
   n   = odb->n;
@@ -280,9 +292,9 @@ extern odb_record_t* odb_class_ident_lookup(odb_ident_t id,odb_t* odb)
   return NULL;
 }
 
-extern odb_record_t* odb_class_id_lookup(odb_uint_t id,odb_t* odb)
+extern odb_record_t* odb_class_id_lookup(odb_uint_t id, odb_t* odb)
 {
-  int n,i;
+  int n, i;
   odb_record_t* rec;
 
   n   = odb->n;
@@ -299,22 +311,22 @@ extern odb_record_t* odb_class_id_lookup(odb_uint_t id,odb_t* odb)
   return NULL;
 }
 
-extern odb_field_t* odb_attribute_name_lookup(const char* att,identtab_t* tab,odb_record_t* rec)
+extern odb_field_t* odb_attribute_name_lookup(const char* att, identtab_t* tab, odb_record_t* rec)
 {
   ident_t* ident;
 
-  if ((ident = identtab_name_lookup(tab,att)) == NULL)
+  if ((ident = identtab_name_lookup(tab, att)) == NULL)
     {
-      btrace("failed lookup of attribute %s",att);
+      btrace("failed lookup of attribute %s", att);
       return NULL;
     }
 
-  return odb_attribute_ident_lookup(ident->id,rec);
+  return odb_attribute_ident_lookup(ident->id, rec);
 }
 
-extern odb_field_t* odb_attribute_ident_lookup(odb_ident_t id,odb_record_t* rec)
+extern odb_field_t* odb_attribute_ident_lookup(odb_ident_t id, odb_record_t* rec)
 {
-  int n,i;
+  int n, i;
   odb_field_t* f;
 
   n = rec->n;
