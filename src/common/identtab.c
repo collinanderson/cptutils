@@ -44,12 +44,12 @@ extern identtab_t* identtab_new(void)
       if ( (tab->names = root_new()) != NULL )
 	{
 	  if ( (tab->ids = root_new()) != NULL )
-	    {
-	      return tab;
-	    }
-	  free(tab->ids);
+	    return tab;
+
+	  free(tab->names);
 	}
-      free(tab->names);
+
+      free(tab);
     }
 
   return NULL;
