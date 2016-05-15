@@ -26,60 +26,66 @@ typedef struct fill_stack_t
 
 static int xycpt_convert(fill_stack_t*, cpt_t*, xycpt_opt_t);
 static fill_stack_t* xyread(char*, xycpt_opt_t);
+static void fill_stack_destroy(fill_stack_t*);
 
 extern int xycpt(xycpt_opt_t opt)
 {
-  cpt_t* cpt;
-  fill_stack_t* xy;
 
-  xy = xyread(opt.file.input, opt);
+  fill_stack_t* xy = xyread(opt.file.input, opt);
+  int err = 0;
 
   if (!xy)
     {
       btrace("failed to read data from %s",
 	      (opt.file.input ?  opt.file.input : "<stdin>"));
-      return 1;
-    }
-
-  if ((cpt = cpt_new()) == NULL)
-    {
-      btrace("failed to get new cpt strcture");
-      return 1;
-    }
-
-  cpt->model = model_rgb;
-  cpt->fg.type = cpt->bg.type = cpt->nan.type = fill_colour;
-  cpt->bg.u.colour.rgb = opt.bg;
-  cpt->fg.u.colour.rgb = opt.fg;
-  cpt->nan.u.colour.rgb = opt.nan;
-
-  if (opt.file.input)
-    cpt->name = cptname(opt.file.input, "*");
-
-  int err = 0;
-
-  if (xycpt_convert(xy, cpt, opt) != 0)
-    {
-      btrace("failed to convert data");
       err++;
     }
   else
     {
-      if (opt.verbose)
-	{
-	  int n = cpt_nseg(cpt);
-	  printf("converted to %i segment rgb-spline\n", n);
-	}
+      cpt_t* cpt = cpt_new();
 
-      if (cpt_write(opt.file.output, cpt) != 0)
+      if (cpt == NULL)
 	{
-	  btrace("failed to write palette to %s",
-		 (opt.file.output ? opt.file.output : "<stdout>"));
+	  btrace("failed to get new cpt strcture");
 	  err++;
 	}
-    }
+      else
+	{
+	  cpt->model = model_rgb;
+	  cpt->fg.type = cpt->bg.type = cpt->nan.type = fill_colour;
+	  cpt->bg.u.colour.rgb = opt.bg;
+	  cpt->fg.u.colour.rgb = opt.fg;
+	  cpt->nan.u.colour.rgb = opt.nan;
 
-  cpt_destroy(cpt);
+	  if (opt.file.input)
+	    cpt->name = cptname(opt.file.input, "*");
+
+	  if (xycpt_convert(xy, cpt, opt) != 0)
+	    {
+	      btrace("failed to convert data");
+	      err++;
+	    }
+	  else
+	    {
+	      if (opt.verbose)
+		{
+		  int n = cpt_nseg(cpt);
+		  printf("converted to %i segment rgb-spline\n", n);
+		}
+
+	      if (cpt_write(opt.file.output, cpt) != 0)
+		{
+		  btrace("failed to write palette to %s",
+			 (opt.file.output ? opt.file.output : "<stdout>"));
+		  err++;
+		}
+	    }
+
+	  cpt_destroy(cpt);
+	}
+
+      fill_stack_destroy(xy);
+    }
 
   return err;
 }
@@ -261,6 +267,15 @@ static fill_stack_t* xyread(char* file, xycpt_opt_t opt)
     xy = xyread_stream(stdin, opt);
 
   return xy;
+}
+
+static void fill_stack_destroy(fill_stack_t* xy)
+{
+  if (xy)
+    {
+      fill_stack_destroy(xy->next);
+      free(xy);
+    }
 }
 
 /*
