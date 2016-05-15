@@ -41,8 +41,6 @@ extern int xycpt(xycpt_opt_t opt)
       return 1;
     }
 
-  /* create a cpt struct */
-
   if ((cpt = cpt_new()) == NULL)
     {
       btrace("failed to get new cpt strcture");
@@ -50,19 +48,13 @@ extern int xycpt(xycpt_opt_t opt)
     }
 
   cpt->model = model_rgb;
-
-  /* set bg/fg/nan values */
-
   cpt->fg.type = cpt->bg.type = cpt->nan.type = fill_colour;
-
-  cpt->bg.u.colour.rgb  = opt.bg;
-  cpt->fg.u.colour.rgb  = opt.fg;
+  cpt->bg.u.colour.rgb = opt.bg;
+  cpt->fg.u.colour.rgb = opt.fg;
   cpt->nan.u.colour.rgb = opt.nan;
 
   if (opt.file.input)
     cpt->name = cptname(opt.file.input, "*");
-
-  /* transfer the gradient data to the cpt_t struct */
 
   int err = 0;
 
@@ -79,19 +71,15 @@ extern int xycpt(xycpt_opt_t opt)
 	  printf("converted to %i segment rgb-spline\n", n);
 	}
 
-      /* write the cpt file */
-
       if (cpt_write(opt.file.output, cpt) != 0)
 	{
 	  btrace("failed to write palette to %s",
 		 (opt.file.output ? opt.file.output : "<stdout>"));
 	  err++;
 	}
-
-      /* tidy */
-
-      cpt_destroy(cpt);
     }
+
+  cpt_destroy(cpt);
 
   return err;
 }
