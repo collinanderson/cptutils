@@ -124,7 +124,8 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 
 	  for (i=0 ; i<n-1 ; i++)
 	    {
-	      if ((seg = cpt_seg_new_err()) == NULL) return 1;
+	      if ((seg = cpt_seg_new_err()) == NULL)
+		goto cleanup_on_fail;
 
 	      seg->lsmp.val  = F[i].val;
 	      seg->lsmp.fill = F[i+1].fill;
@@ -132,13 +133,15 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	      seg->rsmp.val  = F[i+1].val;
 	      seg->rsmp.fill = F[i+1].fill;
 
-	      if (cpt_append_err(seg, cpt) != 0) return 1;
+	      if (cpt_append_err(seg, cpt) != 0)
+		goto cleanup_on_fail;
 	    }
 	  break;
 
 	case reg_middle:
 
-	  if ((seg = cpt_seg_new_err()) == NULL) return 1;
+	  if ((seg = cpt_seg_new_err()) == NULL)
+	    goto cleanup_on_fail;
 
 	  seg->lsmp.val  = F[0].val;
 	  seg->lsmp.fill = F[0].fill;
@@ -146,11 +149,13 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	  seg->rsmp.val  = (F[0].val + F[1].val)/2.0;
 	  seg->rsmp.fill = F[0].fill;
 
-	  if (cpt_append_err(seg, cpt) != 0) return 1;
+	  if (cpt_append_err(seg, cpt) != 0)
+	    goto cleanup_on_fail;
 
 	  for (i=1 ; i<n-1 ; i++)
 	    {
-	      if ((seg = cpt_seg_new_err()) == NULL) return 1;
+	      if ((seg = cpt_seg_new_err()) == NULL)
+		goto cleanup_on_fail;
 
 	      seg->lsmp.val  = (F[i-1].val+F[i].val)/2.0;
 	      seg->lsmp.fill = F[i].fill;
@@ -158,10 +163,12 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	      seg->rsmp.val  = (F[i].val+F[i+1].val)/2.0;
 	      seg->rsmp.fill = F[i].fill;
 
-	      if (cpt_append_err(seg, cpt) != 0) return 1;
+	      if (cpt_append_err(seg, cpt) != 0)
+		goto cleanup_on_fail;
 	    }
 
-	  if ((seg = cpt_seg_new_err()) == NULL) return 1;
+	  if ((seg = cpt_seg_new_err()) == NULL)
+	    goto cleanup_on_fail;
 
 	  seg->lsmp.val  = (F[n-2].val+F[n-1].val)/2.0;
 	  seg->lsmp.fill = F[n-1].fill;
@@ -169,7 +176,8 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	  seg->rsmp.val  = F[n-1].val;
 	  seg->rsmp.fill = F[n-1].fill;
 
-	  if (cpt_append_err(seg, cpt) != 0) return 1;
+	  if (cpt_append_err(seg, cpt) != 0)
+	    goto cleanup_on_fail;
 
 	  break;
 
@@ -177,7 +185,8 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 
 	  for (i=0 ; i<n-1 ; i++)
 	    {
-	      if ((seg = cpt_seg_new_err()) == NULL) return 1;
+	      if ((seg = cpt_seg_new_err()) == NULL)
+		goto cleanup_on_fail;
 
 	      seg->lsmp.val  = F[i].val;
 	      seg->lsmp.fill = F[i].fill;
@@ -185,7 +194,8 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	      seg->rsmp.val  = F[i+1].val;
 	      seg->rsmp.fill = F[i].fill;
 
-	      if (cpt_append_err(seg, cpt) != 0) return 1;
+	      if (cpt_append_err(seg, cpt) != 0)
+		goto cleanup_on_fail;
 	    }
 	  break;
 
@@ -195,7 +205,8 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
     {
       for (i=0 ; i<n-1 ; i++)
 	{
-	  if ((seg = cpt_seg_new_err()) == NULL) return 1;
+	  if ((seg = cpt_seg_new_err()) == NULL)
+	    goto cleanup_on_fail;
 
 	  seg->lsmp.val  = F[i].val;
 	  seg->lsmp.fill = F[i].fill;
@@ -203,13 +214,18 @@ static int xycpt_convert(fill_stack_t* fstack, cpt_t *cpt, xycpt_opt_t opt)
 	  seg->rsmp.val  = F[i+1].val;
 	  seg->rsmp.fill = F[i+1].fill;
 
-	  if (cpt_append_err(seg, cpt) != 0) return 1;
+	  if (cpt_append_err(seg, cpt) != 0)
+	    goto cleanup_on_fail;
 	}
     }
 
   free(F);
-
   return 0;
+
+ cleanup_on_fail:
+
+  free(F);
+  return 1;
 }
 
 /* error message versions of functions used in xycpt_convert */
