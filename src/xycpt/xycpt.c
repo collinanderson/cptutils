@@ -64,32 +64,36 @@ extern int xycpt(xycpt_opt_t opt)
 
   /* transfer the gradient data to the cpt_t struct */
 
+  int err = 0;
+
   if (xycpt_convert(xy, cpt, opt) != 0)
     {
       btrace("failed to convert data");
-      return 1;
+      err++;
     }
-
-  if (opt.verbose)
+  else
     {
-      int n = cpt_nseg(cpt);
-      printf("converted to %i segment rgb-spline\n", n);
+      if (opt.verbose)
+	{
+	  int n = cpt_nseg(cpt);
+	  printf("converted to %i segment rgb-spline\n", n);
+	}
+
+      /* write the cpt file */
+
+      if (cpt_write(opt.file.output, cpt) != 0)
+	{
+	  btrace("failed to write palette to %s",
+		 (opt.file.output ? opt.file.output : "<stdout>"));
+	  err++;
+	}
+
+      /* tidy */
+
+      cpt_destroy(cpt);
     }
 
-  /* write the cpt file */
-
-  if (cpt_write(opt.file.output, cpt) != 0)
-    {
-      btrace("failed to write palette to %s",
-	      (opt.file.output ? opt.file.output : "<stdout>"));
-      return 1;
-    }
-
-  /* tidy */
-
-  cpt_destroy(cpt);
-
-  return 0;
+  return err;
 }
 
 static cpt_seg_t* cpt_seg_new_err(void);
