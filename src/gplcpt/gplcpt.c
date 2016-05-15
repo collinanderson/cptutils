@@ -14,10 +14,14 @@
 
 #include "gplcpt.h"
 
-static int gplcpt_st(gplcpt_opt_t, FILE*);
+static int gplcpt_st(gplcpt_opt_t, cpt_t*, FILE*);
 
 extern int gplcpt(gplcpt_opt_t opt)
 {
+  cpt_t *cpt;
+
+  if ((cpt = cpt_new()) == NULL) return 1;
+
   int err = 0;
 
   if (opt.file.input)
@@ -31,12 +35,14 @@ extern int gplcpt(gplcpt_opt_t opt)
         }
       else
 	{
-	  err = gplcpt_st(opt, st);
+	  err = gplcpt_st(opt, cpt, st);
 	  fclose(st);
 	}
     }
   else
-    err = gplcpt_st(opt, stdin);
+    err = gplcpt_st(opt, cpt, stdin);
+
+  cpt_destroy(cpt);
 
   return err;
 }
@@ -46,7 +52,7 @@ extern int gplcpt(gplcpt_opt_t opt)
 static int gplcpt_write(gplcpt_opt_t, cpt_t*);
 static int skipline(const char*);
 
-extern int gplcpt_st(gplcpt_opt_t opt, FILE *st)
+extern int gplcpt_st(gplcpt_opt_t opt, cpt_t *cpt, FILE *st)
 {
   char buf[BUFSIZE];
 
@@ -66,20 +72,12 @@ extern int gplcpt_st(gplcpt_opt_t opt, FILE *st)
       return 1;
     }
 
-  /* create cpt struct */
-
-  cpt_t *cpt;
-
-  if ((cpt = cpt_new()) == NULL) return 1;
+  /* setup cpt struct */
 
   cpt->model = model_rgb;
-
-  /* set bg/fg/nan values */
-
   cpt->fg.type = cpt->bg.type = cpt->nan.type = fill_colour;
-
-  cpt->bg.u.colour.rgb  = opt.bg;
-  cpt->fg.u.colour.rgb  = opt.fg;
+  cpt->bg.u.colour.rgb = opt.bg;
+  cpt->fg.u.colour.rgb = opt.fg;
   cpt->nan.u.colour.rgb = opt.nan;
 
   /* get next non-comment line */
