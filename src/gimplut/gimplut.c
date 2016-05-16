@@ -1,6 +1,6 @@
 /*
   gimpcpt.c
-  
+
   (c) J.J.Green 2001, 2004, 2014
 */
 
@@ -24,40 +24,39 @@ static int gimplut_st(FILE*, gradient_t*, glopt_t);
 
 extern int gimplut(char* infile, char* outfile, glopt_t opt)
 {
-  gradient_t* gradient;
-  int         err;
-  
-  /* load the gradient */
-  
-  gradient = grad_load_gradient(infile);
-  
+  gradient_t *gradient = grad_load_gradient(infile);
+
   if (!gradient)
     {
       btrace("failed to load gradient from %s", (infile ? infile : "<stdin>"));
       return 1;
     }
-  
+
+  int err = 0;
+
   if (outfile)
     {
       FILE *lutst = fopen(outfile, "w");
-      
+
       if (!lutst)
 	{
 	  btrace("failed to open %s", outfile);
-	  return 1;
+	  err++;
 	}
-      
-      err = gimplut_st(lutst, gradient, opt);
-      
-      fclose(lutst);
+      else
+	{
+	  err = gimplut_st(lutst, gradient, opt);
+	  fclose(lutst);
+	}
     }
-  else err = gimplut_st(stdout, gradient, opt);
-  
-  if ((!err) && opt.verbose) 
+  else
+    err = gimplut_st(stdout, gradient, opt);
+
+  if ((!err) && opt.verbose)
     printf("converted to %zu entry LUT\n", opt.numsamp);
-  
+
   grad_free_gradient(gradient);
-  
+
   return err;
 }
 
@@ -93,4 +92,3 @@ static int gimplut_st(FILE* st, gradient_t* g, glopt_t opt)
 
   return fwrite(lut, 1, 3*n, st) != 3*n;
 }
-
