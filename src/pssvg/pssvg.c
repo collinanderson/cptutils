@@ -644,7 +644,7 @@ static int pssvg_convert_ith(grd5_t *grd5, size_t i,
 {
   grd5_grad_t *grd5_grad = grd5->gradients + i;
   svg_t *svg;
-  int err = 0;
+  int err = 0, pushed = 0;
 
   switch (grd5_grad->type)
     {
@@ -670,10 +670,14 @@ static int pssvg_convert_ith(grd5_t *grd5, size_t i,
 		      btrace("error pushing result to stack");
 		      err++;
 		    }
+		  else
+		    {
+		      pushed++;
+		    }
 		}
 	    }
 
-	  if (err) svg_destroy(svg);
+	  if (! pushed) svg_destroy(svg);
 	}
 
       break;
