@@ -638,12 +638,65 @@ static int pssvg_convert_one(grd5_grad_custom_t *grd5_gradc,
   return err;
 }
 
+static int pssvg_convert_ith(grd5_t *grd5, size_t i,
+			     gstack_t *gstack,
+			     pssvg_opt_t opt)
+{
+  grd5_grad_t *grd5_grad = grd5->gradients + i;
+  svg_t *svg;
+  int err = 0;
+
+  switch (grd5_grad->type)
+    {
+    case GRD5_GRAD_CUSTOM:
+
+      if ((svg = svg_new()) == NULL)
+	err++;
+      else
+	{
+	  if (pssvg_title(grd5_grad, svg, opt, i+1) != 0)
+	    err++;
+	  else
+	    {
+	      if (pssvg_convert_one(&(grd5_grad->u.custom), svg, opt) != 0)
+		{
+		  /* failure to convert is not an error */
+
+		  btrace("failed convert of gradient %zi", i);
+		  svg_destroy(svg);
+		}
+	      else
+		{
+		  if (gstack_push(gstack, &svg) != 0)
+		    {
+		      btrace("error pushing result to stack");
+		      err++;
+		    }
+		}
+	    }
+	}
+
+      break;
+
+    case GRD5_GRAD_NOISE:
+
+      btrace("no conversion of (noise) gradient %zi", i);
+      break;
+
+    default:
+
+      btrace("bad type (%i) for gradient %zi", grd5_grad->type, i);
+    }
+
+  return err;
+}
+
 static int pssvg_convert_all(grd5_t *grd5,
 			     svgset_t *svgset,
 			     gstack_t *gstack,
 			     pssvg_opt_t opt)
 {
-  int i, n = grd5->n;
+  size_t n = grd5->n;
 
   if (opt.title == NULL)
     {
@@ -673,42 +726,10 @@ static int pssvg_convert_all(grd5_t *grd5,
 	}
     }
 
-  for (i=0 ; i<n ; i++)
+  for (size_t i = 0 ; i < n ; i++)
     {
-      grd5_grad_t *grd5_grad = grd5->gradients + i;
-      svg_t *svg;
-
-      switch (grd5_grad->type)
-	{
-	case GRD5_GRAD_CUSTOM:
-
-	  if ((svg = svg_new()) == NULL) return 1;
-	  if (pssvg_title(grd5_grad, svg, opt, i+1) != 0) return 1;
-	  if (pssvg_convert_one(&(grd5_grad->u.custom), svg, opt) == 0)
-	    {
-	      if (gstack_push(gstack, &svg) != 0)
-		{
-		  btrace("error pushing result to stack");
-		  return 1;
-		}
-	    }
-	  else
-	    {
-	      btrace("failed convert of gradient %i", i);
-	      svg_destroy(svg);
-	    }
-
-	  break;
-
-	case GRD5_GRAD_NOISE:
-
-	  btrace("no conversion of (noise) gradient %i", i);
-	  break;
-
-	default:
-
-	  btrace("bad type (%i) for gradient %i", grd5_grad->type, i);
-	}
+      if (pssvg_convert_ith(grd5, i, gstack, opt) != 0)
+	return 1;
     }
 
   return 0;
@@ -716,7 +737,7 @@ static int pssvg_convert_all(grd5_t *grd5,
 
 static int pssvg_convert(grd5_t *grd5, svgset_t *svgset, pssvg_opt_t opt)
 {
-  int i, n = grd5->n;
+  int n = grd5->n;
   gstack_t *gstack;
 
   if ((gstack = gstack_new(sizeof(svg_t*), n, 1)) == NULL)
@@ -739,15 +760,19 @@ static int pssvg_convert(grd5_t *grd5, svgset_t *svgset, pssvg_opt_t opt)
 	    btrace("only %zd/%d gradient converted", m, n);
 
 	  if (gstack_reverse(gstack) != 0)
-	    return 1;
+	    err++;
+	  else
+	    {
+	      svgset->n = m;
 
-	  svgset->n = m;
-
-	  if ((svgset->svg = malloc(m*sizeof(svg_t*))) == NULL)
-	    return 1;
-
-	  for (i=0 ; i<m ; i++)
-	    gstack_pop(gstack, svgset->svg+i);
+	      if ((svgset->svg = malloc(m*sizeof(svg_t*))) == NULL)
+		err++;
+	      else
+		{
+		  for (size_t i = 0 ; i < m ; i++)
+		    gstack_pop(gstack, svgset->svg+i);
+		}
+	    }
 	}
     }
 
