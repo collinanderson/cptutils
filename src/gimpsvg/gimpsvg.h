@@ -13,7 +13,7 @@
 #include "colour.h"
 #include "svgpreview.h"
 
-typedef struct 
+typedef struct
 {
   bool verbose, reverse;
   size_t samples;
@@ -21,11 +21,6 @@ typedef struct
   svg_preview_t preview;
 } gimpsvg_opt_t;
 
-extern int gimpsvg(const char*, const char*, gimpsvg_opt_t);
+extern int gimpsvg(const char*, const char*, gimpsvg_opt_t*);
 
 #endif
-
-
-
-
-

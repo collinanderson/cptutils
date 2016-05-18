@@ -1,5 +1,5 @@
 /*
-  main.c 
+  main.c
 
   part of the gimpsvg package
 
@@ -17,7 +17,7 @@
 
   You should have received a copy of the GNU General Public
   License along with this program; if not, write to the
-  Free Software Foundation, Inc.,  51 Franklin Street, Fifth Floor, 
+  Free Software Foundation, Inc.,  51 Franklin Street, Fifth Floor,
   Boston, MA 02110-1301 USA
 */
 
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
       return EXIT_FAILURE;
     }
 
-  /* check arguments & transfer to opt structure */ 
+  /* check arguments & transfer to opt structure */
 
   opt.verbose = info.verbose_given;
   opt.reverse = false;
@@ -68,14 +68,14 @@ int main(int argc, char** argv)
       opt.preview.use = true;
       if (svg_preview_geometry(info.geometry_arg, &(opt.preview)) != 0)
         {
-          fprintf(stderr, "failed parse of geometry : %s\n", 
+          fprintf(stderr, "failed parse of geometry : %s\n",
                   info.geometry_arg);
           return EXIT_FAILURE;
         }
     }
   else
     opt.preview.use = false;
-  
+
   /* null outfile for stdout */
 
   outfile = (info.output_given ? info.output_arg : NULL);
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
       fprintf(stderr, "Sorry, only one file at a time\n");
       return EXIT_FAILURE;
     }
-  
+
   if (opt.verbose)
     printf("This is gimpsvg (version %s)\n", VERSION);
 
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 
   btrace_enable("gimpsvg");
 
-  int err = gimpsvg(infile, outfile, opt);
+  int err = gimpsvg(infile, outfile, &opt);
 
   if (err)
     {
@@ -123,11 +123,11 @@ int main(int argc, char** argv)
 	      format = btrace_format(info.backtrace_format_arg);
 	      if (format == BTRACE_ERROR)
 		{
-		  fprintf(stderr, "no such backtrace format %s\n", 
+		  fprintf(stderr, "no such backtrace format %s\n",
 			  info.backtrace_format_arg);
 		  return EXIT_FAILURE;
 		}
-	    }	  
+	    }
 	  btrace_print(info.backtrace_file_arg, format);
 	}
     }
@@ -136,8 +136,8 @@ int main(int argc, char** argv)
       printf("palette written to %s\n", (outfile ? outfile : "<stdin>"));
       if (opt.preview.use)
 	{
-	  printf("with preview (%zu x %zu px)\n", 
-		 opt.preview.width, 
+	  printf("with preview (%zu x %zu px)\n",
+		 opt.preview.width,
 		 opt.preview.height);
 	}
     }
@@ -152,15 +152,3 @@ int main(int argc, char** argv)
 
   return (err ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-
