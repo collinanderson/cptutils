@@ -661,9 +661,7 @@ static int pssvg_convert_ith(grd5_t *grd5, size_t i,
 	      if (pssvg_convert_one(&(grd5_grad->u.custom), svg, opt) != 0)
 		{
 		  /* failure to convert is not an error */
-
 		  btrace("failed convert of gradient %zi", i);
-		  svg_destroy(svg);
 		}
 	      else
 		{
@@ -674,6 +672,8 @@ static int pssvg_convert_ith(grd5_t *grd5, size_t i,
 		    }
 		}
 	    }
+
+	  if (err) svg_destroy(svg);
 	}
 
       break;
