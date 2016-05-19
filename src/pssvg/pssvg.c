@@ -299,10 +299,81 @@ static int lab_to_rgb(grd5_colour_stop_t *stop)
   replace the midpoints by explicit mid-point stops
 */
 
+static int rectify_rgb2(grd5_grad_custom_t* gradc, gstack_t *stack, pssvg_opt_t opt)
+{
+  grd5_colour_stop_t *grd5_stop = gradc->colour.stops;
+  int n = gradc->colour.n;
+  rgb_stop_t stop;
+
+  if (grd5_stop[0].Lctn > 0)
+    {
+      stop.z  = 0;
+      stop.r = grd5_rgb_it(grd5_stop[0].u.rgb.Rd);
+      stop.g = grd5_rgb_it(grd5_stop[0].u.rgb.Grn);
+      stop.b = grd5_rgb_it(grd5_stop[0].u.rgb.Bl);
+
+      if (gstack_push(stack, &stop) != 0)
+	return 1;
+    }
+
+  for (int i = 0 ; i < n-1 ; i++)
+    {
+      stop.z = grd5_z_it(grd5_stop[i].Lctn);
+      stop.r = grd5_rgb_it(grd5_stop[i].u.rgb.Rd);
+      stop.g = grd5_rgb_it(grd5_stop[i].u.rgb.Grn);
+      stop.b = grd5_rgb_it(grd5_stop[i].u.rgb.Bl);
+
+      if (gstack_push(stack, &stop) != 0)
+	return 1;
+
+      if (grd5_stop[i].Mdpn != 50)
+	{
+	  stop.z = grd5_zmid_it(grd5_stop[i].Lctn,
+				grd5_stop[i+1].Lctn,
+				grd5_stop[i].Mdpn);
+	  stop.r = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Rd) +
+			grd5_rgb_it(grd5_stop[i+1].u.rgb.Rd));
+	  stop.g = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Grn) +
+			grd5_rgb_it(grd5_stop[i+1].u.rgb.Grn));
+	  stop.b = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Bl) +
+			grd5_rgb_it(grd5_stop[i+1].u.rgb.Bl));
+
+	  if (gstack_push(stack, &stop) != 0)
+	    return 1;
+	}
+    }
+
+  stop.z = grd5_z_it(grd5_stop[n-1].Lctn);
+  stop.r = grd5_rgb_it(grd5_stop[n-1].u.rgb.Rd);
+  stop.g = grd5_rgb_it(grd5_stop[n-1].u.rgb.Grn);
+  stop.b = grd5_rgb_it(grd5_stop[n-1].u.rgb.Bl);
+
+  if (gstack_push(stack, &stop) != 0)
+    return 1;
+
+  /* add implicit final stop */
+
+  if (stop.z < 409600)
+    {
+      stop.z = 409600;
+
+      if (gstack_push(stack, &stop) != 0)
+	return 1;
+    }
+
+  if (gstack_reverse(stack) != 0)
+    return 1;
+
+  if (trim_rgb(stack) != 0)
+    return 1;
+
+  return 0;
+}
+
 static gstack_t* rectify_rgb(grd5_grad_custom_t* gradc, pssvg_opt_t opt)
 {
   grd5_colour_stop_t *grd5_stop = gradc->colour.stops;
-  int i, n = gradc->colour.n;
+  int n = gradc->colour.n;
 
   if (n<2)
     {
@@ -310,7 +381,7 @@ static gstack_t* rectify_rgb(grd5_grad_custom_t* gradc, pssvg_opt_t opt)
       return NULL;
     }
 
-  for (i=0 ; i<n ; i++)
+  for (int i = 0 ; i < n ; i++)
     {
       grd5_colour_stop_t *stop = grd5_stop + i;
 
@@ -365,94 +436,23 @@ static gstack_t* rectify_rgb(grd5_grad_custom_t* gradc, pssvg_opt_t opt)
 	}
     }
 
-  gstack_t *stack;
+  gstack_t *stack = gstack_new(sizeof(rgb_stop_t), 2*n, n);
 
-  if ((stack = gstack_new(sizeof(rgb_stop_t), 2*n, n)) == NULL)
-    return NULL;
-
-  rgb_stop_t stop;
-
-  if (grd5_stop[0].Lctn > 0)
+  if (stack != NULL)
     {
-      stop.z  = 0;
-      stop.r = grd5_rgb_it(grd5_stop[0].u.rgb.Rd);
-      stop.g = grd5_rgb_it(grd5_stop[0].u.rgb.Grn);
-      stop.b = grd5_rgb_it(grd5_stop[0].u.rgb.Bl);
+      if (rectify_rgb2(gradc, stack, opt) == 0)
+	return stack;
 
-      if (gstack_push(stack, &stop) != 0)
-	return NULL;
+      gstack_destroy(stack);
     }
 
-  for (i=0 ; i<n-1 ; i++)
-    {
-      stop.z = grd5_z_it(grd5_stop[i].Lctn);
-      stop.r = grd5_rgb_it(grd5_stop[i].u.rgb.Rd);
-      stop.g = grd5_rgb_it(grd5_stop[i].u.rgb.Grn);
-      stop.b = grd5_rgb_it(grd5_stop[i].u.rgb.Bl);
-
-      if (gstack_push(stack, &stop) != 0)
-	return NULL;
-
-      if (grd5_stop[i].Mdpn != 50)
-	{
-	  stop.z = grd5_zmid_it(grd5_stop[i].Lctn,
-				grd5_stop[i+1].Lctn,
-				grd5_stop[i].Mdpn);
-	  stop.r = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Rd) +
-			grd5_rgb_it(grd5_stop[i+1].u.rgb.Rd));
-	  stop.g = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Grn) +
-			grd5_rgb_it(grd5_stop[i+1].u.rgb.Grn));
-	  stop.b = 0.5*(grd5_rgb_it(grd5_stop[i].u.rgb.Bl) +
-			grd5_rgb_it(grd5_stop[i+1].u.rgb.Bl));
-
-	  if (gstack_push(stack, &stop) != 0)
-	    return NULL;
-	}
-    }
-
-  stop.z = grd5_z_it(grd5_stop[n-1].Lctn);
-  stop.r = grd5_rgb_it(grd5_stop[n-1].u.rgb.Rd);
-  stop.g = grd5_rgb_it(grd5_stop[n-1].u.rgb.Grn);
-  stop.b = grd5_rgb_it(grd5_stop[n-1].u.rgb.Bl);
-
-  if (gstack_push(stack, &stop) != 0)
-    return NULL;
-
-  /* add implicit final stop */
-
-  if (stop.z < 409600)
-    {
-      stop.z = 409600;
-
-      if (gstack_push(stack, &stop) != 0)
-	return NULL;
-    }
-
-  if (gstack_reverse(stack) != 0)
-    return NULL;
-
-  if (trim_rgb(stack) != 0)
-    return NULL;
-
-  return stack;
+  return NULL;
 }
 
-static gstack_t* rectify_op(grd5_grad_custom_t* gradc)
+static int rectify_op2(grd5_grad_custom_t *gradc, gstack_t *stack)
 {
   grd5_transp_stop_t *grd5_stop = gradc->transp.stops;
-  int i,n = gradc->transp.n;
-
-  if (n<2)
-    {
-      btrace("input (grd5) has %i opacity stop(s)", n);
-      return NULL;
-    }
-
-  gstack_t *stack;
-
-  if ((stack = gstack_new(sizeof(op_stop_t), 2*n, n)) == NULL)
-    return NULL;
-
+  int n = gradc->transp.n;
   op_stop_t stop;
 
   if (grd5_stop[0].Lctn > 0)
@@ -461,16 +461,16 @@ static gstack_t* rectify_op(grd5_grad_custom_t* gradc)
       stop.op = grd5_op_it(grd5_stop[0].Opct);
 
       if (gstack_push(stack, &stop) != 0)
-	return NULL;
+	return 1;
     }
 
-  for (i=0 ; i<n-1 ; i++)
+  for (int i = 0 ; i < n-1 ; i++)
     {
       stop.z  = grd5_z_it(grd5_stop[i].Lctn);
       stop.op = grd5_op_it(grd5_stop[i].Opct);
 
       if (gstack_push(stack, &stop) != 0)
-	return NULL;
+	return 1;
 
       if (grd5_stop[i].Mdpn != 50)
 	{
@@ -481,7 +481,7 @@ static gstack_t* rectify_op(grd5_grad_custom_t* gradc)
 			 grd5_op_it(grd5_stop[i+1].Opct));
 
 	  if (gstack_push(stack, &stop) != 0)
-	    return NULL;
+	    return 1;
 	}
     }
 
@@ -489,22 +489,44 @@ static gstack_t* rectify_op(grd5_grad_custom_t* gradc)
   stop.op = grd5_op_it(grd5_stop[n-1].Opct);
 
   if (gstack_push(stack, &stop) != 0)
-    return NULL;
+    return 1;
 
   if (stop.z < 409600)
     {
       stop.z = 409600;
       if (gstack_push(stack, &stop) != 0)
-	return NULL;
+	return 1;
     }
 
   if (gstack_reverse(stack) != 0)
-    return NULL;
+    return 1;
 
   if (trim_op(stack) != 0)
-    return NULL;
+    return 1;
 
-  return stack;
+  return 0;
+}
+
+static gstack_t* rectify_op(grd5_grad_custom_t* gradc)
+{
+  int n = gradc->transp.n;
+
+  if (n < 2)
+    btrace("input (grd5) has %i opacity stop(s)", n);
+  else
+    {
+      gstack_t *stack = gstack_new(sizeof(op_stop_t), 2*n, n);
+
+      if (stack != NULL)
+	{
+	  if (rectify_op2(gradc, stack) == 0)
+	    return stack;
+
+	  gstack_destroy(stack);
+	}
+    }
+
+  return NULL;
 }
 
 static int pssvg_title(grd5_grad_t *grd5_grad,
