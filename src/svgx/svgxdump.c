@@ -206,21 +206,25 @@ extern int svgcpt_dump(const svg_t *svg, svgx_opt_t *opt)
 
   cpt->name = strdup(name);
 
+  int err = 0;
+
   if (svgcpt(svg, cpt) != 0)
     {
       btrace("failed to convert %s to cpt", name);
-      return 1;
+      err++;
     }
-
-  if (cpt_write(file, cpt) != 0)
+  else
     {
-      btrace("failed to write to %s", file);
-      return 1;
+      if (cpt_write(file, cpt) != 0)
+	{
+	  btrace("failed to write to %s", file);
+	  err++;
+	}
     }
 
   cpt_destroy(cpt);
 
-  return 0;
+  return err;
 }
 
 /* ggr */
@@ -318,21 +322,25 @@ extern int svgggr_dump(const svg_t *svg, svgx_opt_t *opt)
       return 1;
     }
 
+  int err = 0;
+
   if (svgggr(svg, ggr) != 0)
     {
       btrace("failed to convert %s to cpt", name);
-      return 1;
+      err++;
     }
-
-  if (grad_save_gradient(ggr, file) != 0)
+  else
     {
-      btrace("failed to write to %s", file);
-      return 1;
+      if (grad_save_gradient(ggr, file) != 0)
+	{
+	  btrace("failed to write to %s", file);
+	  err++;
+	}
     }
 
   grad_free_gradient(ggr);
 
-  return 0;
+  return err;
 }
 
 /* povray */
@@ -501,21 +509,25 @@ extern int svgpov_dump(const svg_t *svg, svgx_opt_t *opt)
       return 1;
     }
 
+  int err = 0;
+
   if (svgpov(svg, pov) != 0)
     {
       btrace("failed to convert %s to pov", name);
-      return 1;
+      err++;
     }
-
-  if (pov_write(file, pov) != 0)
+  else
     {
-      btrace("failed to write to %s", file);
-      return 1;
+      if (pov_write(file, pov) != 0)
+	{
+	  btrace("failed to write to %s", file);
+	  err++;
+	}
     }
 
   pov_destroy(pov);
 
-  return 0;
+  return err;
 }
 
 /* qgs */
@@ -611,16 +623,17 @@ extern int svgqgs_dump(const svg_t *svg, svgx_opt_t *opt)
     }
 
   const char *file = opt->output.file;
+  int err = 0;
 
   if (qgs_write(file, qgs) != 0)
     {
       btrace("failed to write to %s", file);
-      return 1;
+      err++;
     }
 
   qgs_destroy(qgs);
 
-  return 0;
+  return err;
 }
 
 /* sao */
@@ -671,21 +684,25 @@ extern int svgsao_dump(const svg_t *svg, svgx_opt_t *opt)
       return 1;
     }
 
+  int err = 0;
+
   if (svgsao(svg, sao) != 0)
     {
       btrace("failed to convert %s to sao", opt->name);
-      return 1;
+      err++;
     }
-
-  if (sao_write(file, sao, name) != 0)
+  else
     {
-      btrace("failed to write to %s", file);
-      return 1;
+      if (sao_write(file, sao, name) != 0)
+	{
+	  btrace("failed to write to %s", file);
+	  err++;
+	}
     }
 
   sao_destroy(sao);
 
-  return 0;
+  return err;
 }
 
 /* gpt */
@@ -762,21 +779,25 @@ extern int svggpt_dump(const svg_t *svg, svgx_opt_t *opt)
       return 1;
     }
 
+  int err = 0;
+
   if (svggpt(svg, gpt) != 0)
     {
       btrace("failed to convert %s to gpt", name);
-      return 1;
+      err++;
     }
-
-  if (gpt_write(file, gpt) != 0)
+  else
     {
-      btrace("failed to write to %s", file);
-      return 1;
+      if (gpt_write(file, gpt) != 0)
+	{
+	  btrace("failed to write to %s", file);
+	  err++;
+	}
     }
 
   gpt_destroy(gpt);
 
-  return 0;
+  return err;
 }
 
 /* css3 */
@@ -841,21 +862,25 @@ extern int svgcss3_dump(const svg_t *svg, svgx_opt_t *opt)
       return 1;
     }
 
+  int err = 0;
+
   if (svgcss3(svg, css3) != 0)
     {
       btrace("failed to convert %s to css3", name);
-      return 1;
+      err++;
     }
-
-  if (css3_write(file, css3) != 0)
+  else
     {
-      btrace("failed to write to %s", file);
-      return 1;
+      if (css3_write(file, css3) != 0)
+	{
+	  btrace("failed to write to %s", file);
+	  err++;
+	}
     }
 
   css3_destroy(css3);
 
-  return 0;
+  return err;
 }
 
 /* grd3 */
@@ -960,21 +985,25 @@ extern int svggrd3_dump(const svg_t *svg, svgx_opt_t *opt)
       return 1;
     }
 
+  int err = 0;
+
   if (svggrd3(svg, grd3) != 0)
     {
       btrace("failed to convert %s to grd3", name);
-      return 1;
+      err++;
     }
-
-  if (grd3_write(file, grd3) != 0)
+  else
     {
-      btrace("failed to write to %s", file);
-      return 1;
+      if (grd3_write(file, grd3) != 0)
+	{
+	  btrace("failed to write to %s", file);
+	  err++;
+	}
     }
 
   grd3_destroy(grd3);
 
-  return 0;
+  return err;
 }
 
 /* png */
@@ -1026,21 +1055,25 @@ extern int svgpng_dump(const svg_t *svg, svgx_opt_t *opt)
       return 1;
     }
 
+  int err = 0;
+
   if (svgpng(svg, png) != 0)
     {
       btrace("failed to convert %s to png", name);
-      return 1;
+      err++;
     }
-
-  if (png_write(file, png, name) != 0)
+  else
     {
-      btrace("failed to write to %s", file);
-      return 1;
+      if (png_write(file, png, name) != 0)
+	{
+	  btrace("failed to write to %s", file);
+	  err++;
+	}
     }
 
   png_destroy(png);
 
-  return 0;
+  return err;
 }
 
 /* svg */
