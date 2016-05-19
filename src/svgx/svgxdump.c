@@ -544,45 +544,33 @@ static void svg_stop_to_qgs_entry(svg_stop_t stop, qgs_entry_t *entry)
   entry->value = stop.value/100.0;
 }
 
-static qgs_t* svgqgs(const svg_t *svg)
+static int svgqgs2(const svg_t *svg, qgs_t *qgs)
 {
-  /* count & create */
-
   int m = svg_num_stops(svg);
 
   if (m < 2)
     {
       btrace("bad number of stops : %i", m);
-      return NULL;
-    }
-
-  qgs_t *qgs;
-
-  if ((qgs = qgs_new()) == NULL)
-    {
-      btrace("failed to allocate qgs");
-      return NULL;
+      return 1;
     }
 
   if (qgs_set_name(qgs, (const char*)svg->name) != 0)
     {
       btrace("failed to set name for qgs");
-      return NULL;
+      return 1;
     }
 
   if (qgs_set_type(qgs, QGS_TYPE_INTERPOLATED) != 0)
     {
       btrace("failed to set type for qgs");
-      return NULL;
+      return 1;
     }
 
   if (qgs_alloc_entries(qgs, m) != 0)
     {
       btrace("failed qgs allocate for %i stops", m);
-      return NULL;
+      return 1;
     }
-
-  /* convert */
 
   svg_node_t *node;
   int n;
@@ -596,17 +584,35 @@ static qgs_t* svgqgs(const svg_t *svg)
       if (qgs_set_entry(qgs, n, &entry) != 0)
 	{
 	  btrace("failed to set qgs entry %zi", n);
-	  return NULL;
+	  return 1;
 	}
     }
 
   if (n != m)
     {
       btrace("missmatch between stops expected (%i) and found (%i)", m, n);
+      return 1;
+    }
+
+  return 0;
+}
+
+static qgs_t* svgqgs(const svg_t *svg)
+{
+  qgs_t *qgs;
+
+  if ((qgs = qgs_new()) == NULL)
+    {
+      btrace("failed to allocate qgs");
       return NULL;
     }
 
-  return qgs;
+  if (svgqgs2(svg, qgs) == 0)
+    return qgs;
+
+  qgs_destroy(qgs);
+
+  return NULL;
 }
 
 extern int svgqgs_dump(const svg_t *svg, svgx_opt_t *opt)
@@ -903,14 +909,7 @@ static int clampi(int z, int min, int max)
 
 static int svggrd3(const svg_t *svg, grd3_t *grd3)
 {
-  int m, n;
-  svg_node_t *node;
-  grd3_rgbseg_t *pcseg;
-  grd3_opseg_t *poseg;
-
-  /* count & allocate */
-
-  m = svg_num_stops(svg);
+  int m = svg_num_stops(svg);
 
   if (m < 2)
     {
@@ -918,56 +917,63 @@ static int svggrd3(const svg_t *svg, grd3_t *grd3)
       return 1;
     }
 
-  pcseg = malloc(m*sizeof(grd3_rgbseg_t));
-  poseg = malloc(m*sizeof(grd3_opseg_t));
+  grd3_rgbseg_t *pcseg = malloc(m*sizeof(grd3_rgbseg_t));
 
-  if (! (pcseg && poseg))
+  if (pcseg == NULL)
+    btrace("failed to allocate segments");
+  else
     {
-      btrace("failed to allocate segments");
-      return 1;
+      grd3_opseg_t *poseg = malloc(m*sizeof(grd3_opseg_t));
+
+      if (poseg == NULL)
+	btrace("failed to allocate segments");
+      else
+	{
+	  int n;
+	  svg_node_t *node;
+
+	  for (n=0, node = svg->nodes ; node ; n++, node = node->r)
+	    {
+	      rgb_t rgb;
+	      double op, z;
+
+	      rgb = node->stop.colour;
+	      op  = node->stop.opacity;
+	      z   = node->stop.value;
+
+	      pcseg[n].z        = clampd(4096*z/100.0, 0, 4096);
+	      pcseg[n].midpoint = 50;
+	      pcseg[n].r        = clampi(rgb.red*257,   0, 65535);
+	      pcseg[n].g        = clampi(rgb.green*257, 0, 65535);;
+	      pcseg[n].b        = clampi(rgb.blue*257,  0, 65535);;
+
+	      poseg[n].z        = clampd(4096*z/100.0, 0, 4096);
+	      poseg[n].midpoint = 50;
+	      poseg[n].opacity  = clampi(op*256, 0, 255);
+	    }
+
+	  char buffer[SVG_NAME_LEN];
+
+	  if (utf8_to_x("LATIN1", svg->name, buffer, SVG_NAME_LEN) != 0)
+	    btrace("failed to convert utf name to latin1");
+	  else
+	    {
+	      grd3->name = (unsigned char*)strdup(buffer);
+
+	      grd3->rgb.n   = m;
+	      grd3->rgb.seg = pcseg;
+
+	      grd3->op.n    = m;
+	      grd3->op.seg  = poseg;
+
+	      return 0;
+	    }
+	}
+      free(poseg);
     }
+  free(pcseg);
 
-  /* convert segments */
-
-  for (n=0, node = svg->nodes ; node ; n++, node = node->r)
-    {
-      rgb_t rgb;
-      double op, z;
-
-      rgb = node->stop.colour;
-      op  = node->stop.opacity;
-      z   = node->stop.value;
-
-      pcseg[n].z        = clampd(4096*z/100.0, 0, 4096);
-      pcseg[n].midpoint = 50;
-      pcseg[n].r        = clampi(rgb.red*257,   0, 65535);
-      pcseg[n].g        = clampi(rgb.green*257, 0, 65535);;
-      pcseg[n].b        = clampi(rgb.blue*257,  0, 65535);;
-
-      poseg[n].z        = clampd(4096*z/100.0, 0, 4096);
-      poseg[n].midpoint = 50;
-      poseg[n].opacity  = clampi(op*256, 0, 255);
-    }
-
-  /* copy name */
-
-  char buffer[SVG_NAME_LEN];
-
-  if (utf8_to_x("LATIN1", svg->name, buffer, SVG_NAME_LEN) != 0)
-    {
-      btrace("failed to convert utf name to latin1");
-      return 1;
-    }
-
-  grd3->name = (unsigned char*)strdup(buffer);
-
-  grd3->rgb.n   = m;
-  grd3->rgb.seg = pcseg;
-
-  grd3->op.n    = m;
-  grd3->op.seg  = poseg;
-
-  return 0;
+  return 1;
 }
 
 extern int svggrd3_dump(const svg_t *svg, svgx_opt_t *opt)
