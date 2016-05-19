@@ -24,9 +24,6 @@ static int pspsvg_convert(grd3_t*, svg_t*, pspsvg_opt_t);
 extern int pspsvg(pspsvg_opt_t opt)
 {
   svg_t* svg;
-  grd3_t* grd3;
-   
-  /* create & intialise a svg struct */
 
   if ((svg = svg_new()) == NULL)
     {
@@ -34,44 +31,44 @@ extern int pspsvg(pspsvg_opt_t opt)
       return 1;
     }
 
-  /* create & read grd3 */
+  grd3_t* grd3;
+  int err = 0;
 
   if ((grd3 = grd3_new()) == NULL)
     {
       btrace("failed to get new grd3 struture");
-      return 1;
+      err++;
     }
-
-  if (grd3_read(opt.file.input, grd3) != 0)
+  else
     {
-      btrace("failed to read data from %s",
-	     (opt.file.input ?  opt.file.input : "<stdin>"));
-      return 1;
+      if (grd3_read(opt.file.input, grd3) != 0)
+	{
+	  btrace("failed to read data from %s",
+		 (opt.file.input ?  opt.file.input : "<stdin>"));
+	  err++;
+	}
+      else
+	{
+	  if (pspsvg_convert(grd3, svg, opt) != 0)
+	    {
+	      btrace("failed to convert data");
+	      err++;
+	    }
+	  else
+	    {
+	      if (svg_write(opt.file.output, 1, (const svg_t**)(&svg), &(opt.preview)) != 0)
+		{
+		  btrace("failed to write palette to %s",
+			 (opt.file.output ? opt.file.output : "<stdout>"));
+		  err++;
+		}
+	    }
+	}
+      grd3_destroy(grd3);
     }
-  
-  /* convert */
-
-  if (pspsvg_convert(grd3, svg, opt) != 0)
-    {
-      btrace("failed to convert data");
-      return 1;
-    }
-  
-  /* write the svg file */
-  
-  if (svg_write(opt.file.output, 1, (const svg_t**)(&svg), &(opt.preview)) != 0)
-    {
-      btrace("failed to write palette to %s",
-	     (opt.file.output ? opt.file.output : "<stdout>"));
-      return 1;
-    }
-  
-  /* tidy */
-
-  grd3_destroy(grd3);  
   svg_destroy(svg);
-  
-  return 0;
+
+  return err;
 }
 
 /* convert grd3 to intermediate types */
@@ -91,8 +88,8 @@ static unsigned int grd3_z_it(unsigned short z)
   return (unsigned int)z*100;
 }
 
-static unsigned int grd3_zmid_it(unsigned short z0, 
-				unsigned short z1, 
+static unsigned int grd3_zmid_it(unsigned short z0,
+				unsigned short z1,
 				unsigned short M)
 {
   return (unsigned int)z0*100 + ((unsigned int)z1 - (unsigned int)z0)*M;
@@ -161,9 +158,9 @@ static int trim_op(gstack_t* stack)
   return 0;
 }
 
-/* 
-   convert the grd3 stops to the intermediate types, 
-   and rectify -- replace the midpoints by explicit 
+/*
+   convert the grd3 stops to the intermediate types,
+   and rectify -- replace the midpoints by explicit
    mid-point stops
 */
 
@@ -194,7 +191,7 @@ static gstack_t* rectify_rgb(grd3_t* grd3)
 
       if (gstack_push(stack, &stop) != 0)
 	return NULL;
-      
+
       if (pseg[i].midpoint != 50)
 	{
 	  stop.z = grd3_zmid_it(pseg[i].z, pseg[i+1].z, pseg[i].midpoint);
@@ -268,11 +265,11 @@ static gstack_t* rectify_op(grd3_t* grd3)
 
       if (gstack_push(stack, &stop) != 0)
 	return NULL;
-      
+
       if (pseg[i].midpoint != 50)
 	{
 	  stop.z  = grd3_zmid_it(pseg[i].z, pseg[i+1].z, pseg[i].midpoint);
-	  stop.op = 0.5*(grd3_op_it(pseg[i].opacity) + 
+	  stop.op = 0.5*(grd3_op_it(pseg[i].opacity) +
 			 grd3_op_it(pseg[i+1].opacity));
 
 	  if (gstack_push(stack, &stop) != 0)
@@ -302,19 +299,19 @@ static gstack_t* rectify_op(grd3_t* grd3)
   return stack;
 }
 
-/* 
+/*
    In grd3 files, names are non null-terminated
    arrays of unsigned char, but we store them as
    null-terminated arrays of unsigned char.  In
    the wild one sees the upper half of the range
-   being used, and it seems to be latin-1.  
+   being used, and it seems to be latin-1.
 
-   SVG uses utf8, so we need to convert our latin-1 
-   to it: the implementation taken from 
-   http://stackoverflow.com/questions/4059775 
+   SVG uses utf8, so we need to convert our latin-1
+   to it: the implementation taken from
+   http://stackoverflow.com/questions/4059775
 */
 
-static int latin1_to_utf8(const unsigned char *in, 
+static int latin1_to_utf8(const unsigned char *in,
 			  unsigned char *out,
 			  size_t lenout)
 {
@@ -328,11 +325,11 @@ static int latin1_to_utf8(const unsigned char *in,
 
   while (*in)
     {
-      if (*in < 128) 
+      if (*in < 128)
 	*out++ = *in++;
       else if (*in < 192)
 	return 1;
-      else 
+      else
 	{
 	  *out++ = 0xc2 + (*in > 0xbf);
 	  *out++ = (*in++ & 0x3f) + 0x80;
@@ -373,13 +370,9 @@ static int pspsvg_convert(grd3_t *grd3, svg_t *svg, pspsvg_opt_t opt)
       btrace("failed conversion of rectified stops to svg");
       return 1;
     }
-  
+
   gstack_destroy(rgbrec);
   gstack_destroy(oprec);
 
   return 0;
 }
-
-
-
-
