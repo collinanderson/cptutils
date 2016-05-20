@@ -1,6 +1,7 @@
 Changes
 
 1.64 (pending)
+  - fixes for 70 bugs found by Coverity, to whom many thanks
   - improved grd3 parse, better error messages for unsupported
     features
 
