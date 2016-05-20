@@ -27,9 +27,7 @@
 #include <qgswrite.h>
 #include <utf8.h>
 
-// FIXME - move to common
 #include "pngwrite.h"
-
 #include "svgxdump.h"
 #include "utf8x.h"
 
@@ -161,10 +159,10 @@ static int svgcpt(const svg_t *svg, cpt_t *cpt)
 	  seg->lsmp.val = z1;
 	  seg->rsmp.val = z2;
 
-	  seg->lsmp.fill.type         = fill_colour;
+	  seg->lsmp.fill.type = fill_colour;
 	  seg->lsmp.fill.u.colour.rgb = c1;
 
-	  seg->rsmp.fill.type         = fill_colour;
+	  seg->rsmp.fill.type = fill_colour;
 	  seg->rsmp.fill.u.colour.rgb = c2;
 
 	  if (cpt_append(seg, cpt) != 0)
