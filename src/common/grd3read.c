@@ -137,6 +137,7 @@ static int grd3_read_stream(FILE *s, grd3_t *grad)
 	  if (c < 0)
 	    {
 	      btrace("file truncated");
+	      free(name);
 	      return 1;
 	    }
 
@@ -178,11 +179,12 @@ static int grd3_read_stream(FILE *s, grd3_t *grad)
 	  if (read_colour_stop(s, seg + j) != 0)
 	    {
 	      btrace("error reading colour stop %i", j+1);
+	      free(seg);
 	      return 1;
 	    }
 	}
 
-      grad->rgb.n   = n;
+      grad->rgb.n = n;
       grad->rgb.seg = seg;
     }
 
@@ -217,6 +219,7 @@ static int grd3_read_stream(FILE *s, grd3_t *grad)
 	  if (read_opacity_stop(s, seg + j) != 0)
 	    {
 	      btrace("error reading opacity stop %i", j+1);
+	      free(seg);
 	      return 1;
 	    }
 	}
