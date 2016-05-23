@@ -876,6 +876,8 @@ static int parse_colour_stop(FILE *stream, grd5_colour_stop_t *stop)
 
   grd5_string_t* subtype = NULL;
 
+  err = GRD5_READ_OK;
+
   if ((err = parse_Type_Clry(stream, &subtype)) != GRD5_READ_OK)
     return err;
 
@@ -885,7 +887,7 @@ static int parse_colour_stop(FILE *stream, grd5_colour_stop_t *stop)
 	{
 	  btrace("read a user colour, but type is %*s not UsrS",
 		      subtype->len, subtype->content);
-	  return GRD5_READ_PARSE;
+	  err = GRD5_READ_PARSE;
 	}
     }
   else
@@ -902,11 +904,14 @@ static int parse_colour_stop(FILE *stream, grd5_colour_stop_t *stop)
 	{
 	  btrace("read a non-user colour, but type is %*s not BckC/FrgC",
 		      subtype->len, subtype->content);
-	  return GRD5_READ_PARSE;
+	  err = GRD5_READ_PARSE;
 	}
     }
 
   grd5_string_destroy(subtype);
+
+  if (err != GRD5_READ_OK)
+    return err;
 
   if ((err = parse_Lctn(stream, &(stop->Lctn))) != GRD5_READ_OK)
     return err;
@@ -931,6 +936,7 @@ static int parse_transp_stop(FILE *stream, grd5_transp_stop_t *stop)
     return err;
 
   err = GRD5_READ_OK;
+
   uint32_t ncomp;
 
   if ((ncomp = objc->value) != 3)
