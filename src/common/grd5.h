@@ -78,8 +78,9 @@ typedef struct
   uint32_t Mdpn;
 } grd5_colour_stop_t;
 
-#define GRD5_GRAD_CUSTOM 1
-#define GRD5_GRAD_NOISE  2
+#define GRD5_GRAD_CUSTOM  1
+#define GRD5_GRAD_NOISE   2
+#define GRD5_GRAD_UNKNOWN 3
 
 typedef struct
 {

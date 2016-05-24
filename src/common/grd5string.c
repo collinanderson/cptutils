@@ -21,7 +21,7 @@ extern void grd5_string_destroy(grd5_string_t* gstr)
     }
 }
 
-extern bool grd5_string_matches(grd5_string_t* gstr, const char* other)
+extern bool grd5_string_matches(const grd5_string_t* gstr, const char* other)
 {
   return strncmp(gstr->content, other, gstr->len) == 0;
 }

@@ -25,9 +25,9 @@
 #include <endian.h>
 #endif
 
-static int grd5_stream(FILE* stream, grd5_t* grd5);
+static int grd5_stream(FILE *stream, grd5_t *grd5);
 
-extern int grd5_read(const char* file, grd5_t** pgrd5)
+extern int grd5_read(const char *file, grd5_t **pgrd5)
 {
   int err = GRD5_READ_BUG;
 
@@ -184,13 +184,13 @@ static grd5_string_t* parse_grd5_string(FILE *stream,
 	*perr = GRD5_READ_FREAD;
       else
 	{
-	  grd5_string_t* gstr;
+	  grd5_string_t *gstr;
 
 	  if ((gstr = malloc(sizeof(grd5_string_t))) == NULL)
 	    *perr = GRD5_READ_MALLOC;
 	  else
 	    {
-	      gstr->len     = len;
+	      gstr->len = len;
 	      gstr->content = content;
 	      return gstr;
 	    }
@@ -218,13 +218,13 @@ static grd5_string_t* parse_tdta(FILE *stream, int *perr)
 
 /* helper functions for parse_<type> functions */
 
-static bool typename_matches(grd5_string_t* typename, const char* expected)
+static bool typename_matches(const grd5_string_t *typename, const char *expected)
 {
   return grd5_string_matches(typename, expected);
 }
 
 static int parse_named_type(FILE *stream,
-			    const char* expected_name,
+			    const char *expected_name,
 			    int expected_type)
 {
   grd5_string_t *typename;
@@ -286,8 +286,8 @@ static int parse_named_type(FILE *stream,
 */
 
 static int parse_untf(FILE *stream,
-		      const char* expected_name,
-		      const char* expected_unit,
+		      const char *expected_name,
+		      const char *expected_unit,
 		      double *pval)
 {
   int err;
@@ -309,7 +309,7 @@ static int parse_untf(FILE *stream,
   return read_double(stream, pval);
 }
 
-static int parse_double(FILE *stream, const char* expected_name, double *pval)
+static int parse_double(FILE *stream, const char *expected_name, double *pval)
 {
   int err;
 
@@ -319,7 +319,7 @@ static int parse_double(FILE *stream, const char* expected_name, double *pval)
   return read_double(stream, pval);
 }
 
-static int parse_bool(FILE *stream, const char* expected_name, bool* pval)
+static int parse_bool(FILE *stream, const char *expected_name, bool *pval)
 {
   int err;
 
@@ -354,9 +354,9 @@ static int parse_vll_length(FILE *stream,
 }
 
 static int parse_enum(FILE *stream,
-		      const char* expected_typename,
-		      grd5_string_t** pname,
-		      grd5_string_t** psubname)
+		      const char *expected_typename,
+		      grd5_string_t **pname,
+		      grd5_string_t **psubname)
 {
   int err;
   grd5_string_t *name, *subname;
@@ -398,7 +398,7 @@ static int parse_text(FILE *stream,
   return GRD5_READ_OK;
 }
 
-static int parse_extremum(FILE *stream, const char* name, grd5_extremum_t *ext)
+static int parse_extremum(FILE *stream, const char *name, grd5_extremum_t *ext)
 {
   int err;
 
@@ -974,6 +974,16 @@ static int parse_transp_stop(FILE *stream, grd5_transp_stop_t *stop)
   parse a file
 */
 
+static int gradient_type_from_string(const grd5_string_t *string)
+{
+  if (typename_matches(string, "CstS"))
+    return GRD5_GRAD_CUSTOM;
+  else if (typename_matches(string, "ClNs"))
+    return GRD5_GRAD_NOISE;
+  else
+    return GRD5_GRAD_UNKNOWN;
+}
+
 static int grd5_stream3(FILE* stream, grd5_t* grd5, grd5_grad_t *grad)
 {
   int type, err;
@@ -1032,16 +1042,32 @@ static int grd5_stream3(FILE* stream, grd5_t* grd5, grd5_grad_t *grad)
 
   /* gradient form */
 
-  grd5_string_t *gradient_type = NULL;
+  grd5_string_t *gradient_type_string = NULL;
 
-  if ((err = parse_GrdF_GrdF(stream, &gradient_type)) != GRD5_READ_OK)
+  if ((err = parse_GrdF_GrdF(stream, &gradient_type_string)) != GRD5_READ_OK)
     {
       btrace("GrdF");
       return err;
     }
 
-  if (typename_matches(gradient_type, "CstS"))
+  int gradient_type = gradient_type_from_string(gradient_type_string);
+
+  switch (gradient_type)
     {
+    case GRD5_GRAD_CUSTOM: break;
+    case GRD5_GRAD_NOISE: break;
+    default:
+      btrace("unknown gradient format %*s",
+	     gradient_type_string->len,
+	     gradient_type_string->content);
+    }
+
+  grd5_string_destroy(gradient_type_string);
+
+  switch (gradient_type)
+    {
+    case GRD5_GRAD_CUSTOM:
+
       if (ncomp != 5)
 	{
 	  btrace("CstS with %i component", ncomp);
@@ -1105,11 +1131,13 @@ static int grd5_stream3(FILE* stream, grd5_t* grd5, grd5_grad_t *grad)
 	  if (memcpy(gradc->colour.stops, stops, stops_size) == NULL)
 	    {
 	      btrace("memcpy");
+	      free(gradc->colour.stops);
+	      gradc->colour.stops = NULL;
 	      return GRD5_READ_MALLOC;
 	    }
-
-	  gradc->colour.n = nstop;
 	}
+
+      gradc->colour.n = nstop;
 
       /* number of transparency stops */
 
@@ -1157,14 +1185,18 @@ static int grd5_stream3(FILE* stream, grd5_t* grd5, grd5_grad_t *grad)
 	  if (memcpy(gradc->transp.stops, stops, stops_size) == NULL)
 	    {
 	      btrace("memcpy");
+	      free(gradc->transp.stops);
+	      gradc->transp.stops = NULL;
 	      return GRD5_READ_MALLOC;
 	    }
 	}
 
       gradc->transp.n = ntstop;
-    }
-  else if (typename_matches(gradient_type, "ClNs"))
-    {
+
+      break;
+
+    case GRD5_GRAD_NOISE:
+
       if (ncomp != 9)
 	{
 	  btrace("ClNs with %i component", ncomp);
@@ -1234,16 +1266,13 @@ static int grd5_stream3(FILE* stream, grd5_t* grd5, grd5_grad_t *grad)
 	  btrace("Mxm");
 	  return err;
 	}
-    }
-  else
-    {
-      btrace("unknown gradient format %*s",
-	     gradient_type->len,
-	     gradient_type->content);
+
+      break;
+
+    default:
+
       return GRD5_READ_PARSE;
     }
-
-  grd5_string_destroy(gradient_type);
 
   return GRD5_READ_OK;
 }

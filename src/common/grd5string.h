@@ -17,6 +17,6 @@ typedef struct
 } grd5_string_t;
 
 extern void grd5_string_destroy(grd5_string_t* gstr);
-extern bool grd5_string_matches(grd5_string_t* gstr, const char* other);
+extern bool grd5_string_matches(const grd5_string_t* gstr, const char* other);
 
 #endif
