@@ -32,9 +32,10 @@ extern int grd5_read(const char *file, grd5_t **pgrd5)
   int err = GRD5_READ_BUG;
 
   grd5_t *grd5 = malloc(sizeof(grd5_t));
-  if (grd5 == NULL) return GRD5_READ_MALLOC;
+  if (grd5 == NULL)
+    return GRD5_READ_MALLOC;
 
-  grd5->n         = 0;
+  grd5->n = 0;
   grd5->gradients = NULL;
 
   if (file)
@@ -42,11 +43,12 @@ extern int grd5_read(const char *file, grd5_t **pgrd5)
       FILE *stream;
 
       if ((stream = fopen(file, "r")) == NULL)
-	return GRD5_READ_FOPEN;
-
-      err = grd5_stream(stream, grd5);
-
-      fclose(stream);
+	err = GRD5_READ_FOPEN;
+      else
+	{
+	  err = grd5_stream(stream, grd5);
+	  fclose(stream);
+	}
     }
  else
     err = grd5_stream(stdin, grd5);
