@@ -43,14 +43,14 @@ gtypealias = {}
 gburstable = {}
 gexts      = {}
 
-for t, gdatum in gdata.iteritems() :
+for t, gdatum in gdata.items() :
     gnames[t], gtypealias[t], gexts[t], gburstable[t] = gdatum
 
 # generate type dict from alias list, this used to specify
 # types (eg -i psp) and to guess file-types from extensions.
 
 gtypedict = {}
-for gtype, galiases in gtypealias.iteritems() :
+for gtype, galiases in gtypealias.items() :
     gtypedict[gtype] = gtype
     gtypedict[gexts[gtype]] = gtype
     for galias in galiases :
@@ -84,8 +84,8 @@ gajmat = {
 
 gdgraph = {}
 
-for t0, t1d in gajmat.iteritems() :
-    gdgraph[t0] = t1d.keys()
+for t0, t1d in gajmat.items() :
+    gdgraph[t0] = list(t1d.keys())
 
 # also create a list of programs
 
@@ -122,12 +122,12 @@ def formats_supported(M, N) :
 
     rfmt, wfmt = rwformats(M, N)
 
-    print "supported formats:"
+    print("supported formats:")
 
     for name in sorted(N.keys()) :
-        print "| {0:3!s} | {1:<25!s} | {2!s}{3!s} |".format(name, N[name],
+        print("| {0:3!s} | {1:<25!s} | {2!s}{3!s} |".format(name, N[name],
              "R" if rfmt[name] else "-",
-             "W" if wfmt[name] else "-")
+             "W" if wfmt[name] else "-"))
 
 # likewise, but in YAML format (it would not be difficult
 # to make this JSON)
@@ -155,8 +155,8 @@ def capabilities() :
                           alias,
                           quoted(gexts[name])
                           ))
-    print "# gradient-convert {0!s} capabilities".format((version))
-    print "{{\n  {0!s}\n}}".format((",\n  ".join(lines)))
+    print("# gradient-convert {0!s} capabilities".format((version)))
+    print("{{\n  {0!s}\n}}".format((",\n  ".join(lines))))
 
 # taken from http://www.python.org/doc/essays/graphs.html
 # this simple shortest path code determines the call sequence
@@ -197,12 +197,12 @@ def gradtype(path) :
 
 def run_clist(clist, topath, verbose) :
     if verbose :
-        print "  {0!s}".format((" ".join(clist)))
+        print("  {0!s}".format((" ".join(clist))))
     if subprocess.call(clist) != 0 :
-        print "failed call to {0!s} : aborting".format((clist[0]))
+        print("failed call to {0!s} : aborting".format((clist[0])))
         return False
     if topath and not os.path.exists(topath) :
-        print "failed to create {0!s} : aborting".format((topath))
+        print("failed to create {0!s} : aborting".format((topath)))
         return False
     return True
 
@@ -241,13 +241,13 @@ def convert(ipath, opath, opt) :
         nburst = len([f for f in os.listdir(tempdir)])
 
         if nburst == 0 :
-            print "nothing to zip"
+            print("nothing to zip")
             return False
 
         # now zip the results
 
         if opt['verbose'] :
-            print "creating zipfile"
+            print("creating zipfile")
 
         arcdir = os.path.splitext( os.path.split( opath )[1] )[0]
 
@@ -283,9 +283,9 @@ def convert(ipath, opath, opt) :
             svgmulti = "{0!s}/{1!s}.svg".format(tempdir, basename)
             clist = ['pssvg'] + opt['btopts'] + ['-o', svgmulti, ipath]
             if opt['verbose'] :
-                print "  {0!s}".format((" ".join(clist)))
+                print("  {0!s}".format((" ".join(clist))))
             if subprocess.call(clist) != 0 :
-                print "failed call to {0!s} : aborting".format((clist[0]))
+                print("failed call to {0!s} : aborting".format((clist[0])))
                 return False
             delfiles.append(svgmulti)
 
@@ -334,7 +334,7 @@ def convert(ipath, opath, opt) :
     # svg to svg (that is handled above)
 
     if opt['ifmt'] == opt['ofmt'] :
-        print "converting {0!s} to {1!s} seems, pointless?".format(opt['ifmt'], opt['ofmt'])
+        print("converting {0!s} to {1!s} seems, pointless?".format(opt['ifmt'], opt['ofmt']))
         return False
 
     # create the system-call sequence, first we create
@@ -342,7 +342,7 @@ def convert(ipath, opath, opt) :
 
     def pairs(L):
         i = iter(L)
-        prev = item = i.next()
+        prev = item = next(i)
         for item in i:
             yield prev, item
             prev = item
@@ -352,7 +352,7 @@ def convert(ipath, opath, opt) :
     callpath = shortest_path(gdgraph, opt['ifmt'], opt['ofmt'])
 
     if callpath is None :
-        print "cannot convert {0!s} to {1!s} yet, sorry".format(opt['ifmt'], opt['ofmt'])
+        print("cannot convert {0!s} to {1!s} yet, sorry".format(opt['ifmt'], opt['ofmt']))
         formats_supported(gajmat, gnames)
         return False
 
@@ -406,37 +406,37 @@ def convert(ipath, opath, opt) :
 # command-line interface
 
 def usage() :
-    print "usage : gradient-convert [options] <input> <output>"
-    print "options"
-    print " -b rgb      : background (cpt)"
-    print " -B          : burst multiple gradients"
-    print " -c          : print program capabilites in YAML format"
-    print " -f rgb      : foreground (cpt)"
-    print " -g geometry : geometry (png, svg)"
-    print " -h          : brief help"
-    print " -i format   : format of input file"
-    print " -n rgb      : nan colour (cpt)"
-    print " -o format   : format of output file"
-    print " -p          : preview (svg)"
-    print " -T rgb      : transparency (cpt, gpt, sao)"
-    print " -v          : verbose"
-    print " -V          : version"
-    print " -z          : zip multiple gradients"
-    print "the type in brackets indicates the file type affected"
-    print
+    print("usage : gradient-convert [options] <input> <output>")
+    print("options")
+    print(" -b rgb      : background (cpt)")
+    print(" -B          : burst multiple gradients")
+    print(" -c          : print program capabilites in YAML format")
+    print(" -f rgb      : foreground (cpt)")
+    print(" -g geometry : geometry (png, svg)")
+    print(" -h          : brief help")
+    print(" -i format   : format of input file")
+    print(" -n rgb      : nan colour (cpt)")
+    print(" -o format   : format of output file")
+    print(" -p          : preview (svg)")
+    print(" -T rgb      : transparency (cpt, gpt, sao)")
+    print(" -v          : verbose")
+    print(" -V          : version")
+    print(" -z          : zip multiple gradients")
+    print("the type in brackets indicates the file type affected")
+    print()
 
 def cleanup_dirs(verbose) :
     global deldirs
     for path in reversed(deldirs) :
         if verbose :
-            print path
+            print(path)
         os.rmdir(path)
 
 def cleanup_files(verbose) :
     global delfiles
     for path in delfiles :
         if verbose :
-            print path
+            print(path)
         if os.path.isfile(path) :
             os.unlink(path)
 
@@ -465,8 +465,8 @@ def main() :
                                     "verbose",
                                     "version",
                                     "zip"])
-    except getopt.GetoptError, err:
-        print str(err)
+    except getopt.GetoptError as err:
+        print(str(err))
         usage()
         sys.exit(2)
 
@@ -493,7 +493,7 @@ def main() :
             formats_supported(gajmat, gnames)
             sys.exit(0)
         elif o in ("-V", "--version") :
-            print "gradient-convert {0!s}".format((version))
+            print("gradient-convert {0!s}".format((version)))
             sys.exit(0)
         elif o in ("-c", "--capabilities") :
             capabilities()
@@ -536,7 +536,7 @@ def main() :
     ipath, opath = args
 
     if verbose :
-        print "This is gradient-convert (version {0!s})".format((version))
+        print("This is gradient-convert (version {0!s})".format((version)))
 
     atexit.register(cleanup_dirs, False)
     atexit.register(cleanup_files, False)
@@ -546,16 +546,16 @@ def main() :
 
     if ofmt is None :
         if burst or zipped :
-            print "Output format must be specified (see -o option)"
+            print("Output format must be specified (see -o option)")
             sys.exit(1)
         ofmt = gradtype(opath)
 
     if verbose :
-        print "input: {0!s}".format((gnames[ifmt]))
-        print "  {0!s}".format((ipath))
-        print "output: {0!s}".format((gnames[ofmt]))
-        print "  {0!s}".format((opath))
-        print "call sequence:"
+        print("input: {0!s}".format((gnames[ifmt])))
+        print("  {0!s}".format((ipath)))
+        print("output: {0!s}".format((gnames[ofmt])))
+        print("  {0!s}".format((opath)))
+        print("call sequence:")
 
     opt = { 'verbose' : verbose,
             'subopts' : subopts,
@@ -568,7 +568,7 @@ def main() :
     success = convert(ipath, opath, opt)
 
     if verbose :
-        print "done."
+        print("done.")
 
     if success is True :
         sys.exit(0)
